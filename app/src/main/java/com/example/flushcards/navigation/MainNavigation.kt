@@ -87,7 +87,8 @@ fun MainNavigation() {
                 .padding(innerPadding)
         ) {
             when (currentScreen) {
-                Screen.Main -> FlashCardsScreen(currentModule)
+                Screen.Main -> FlashCardsScreen(currentModule,
+                    onExit = { currentScreen = Screen.MyCards })
 
                 Screen.MyCards -> MyCardsScreen(modules,
                     onModuleCLick = {module ->

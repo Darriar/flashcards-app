@@ -26,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,7 +35,7 @@ import com.example.flushcards.model.Module
 import com.example.flushcards.ui.theme.FlushCardsTheme
 
 @Composable
-fun FlashCardsScreen(module: Module) {
+fun FlashCardsScreen(module: Module, onExit: () -> Unit = {}) {
 
     if (module.cards.isEmpty()) {
         Box(
@@ -50,9 +51,44 @@ fun FlashCardsScreen(module: Module) {
         return
     }
 
+    var isFinished by remember { mutableStateOf(false) }
+    var rightAnswers by remember { mutableIntStateOf(0) }
+    var wrongAnswers by remember { mutableIntStateOf(0) }
     var currentIndex by remember { mutableIntStateOf(0) }
     var isFlipped by remember { mutableStateOf(false) }
-    val currentCard = module.cards[currentIndex]
+    var sessionTrigger by remember { mutableIntStateOf(0) }
+
+    val cardsToLearn = remember(module, sessionTrigger) {
+        val filtered = module.cards.filter { it.roundsUntilReview <= 0 }
+        filtered.ifEmpty { module.cards }
+    }
+
+    if (isFinished) {
+        if (wrongAnswers == 0)
+            module.cards.forEach {
+                it.progress = 0
+                it.roundsUntilReview = 0
+            }
+        else
+            module.cards.forEach { if (!cardsToLearn.contains(it)) it.roundsUntilReview-- }
+
+        FinishLearning(
+            rightAnswers = rightAnswers,
+            wrongAnswers = wrongAnswers,
+            onRetry = {
+                sessionTrigger++
+                isFinished = false
+                currentIndex = 0
+                rightAnswers = 0
+                wrongAnswers = 0
+                isFlipped = false
+            },
+            onExit = onExit
+        )
+        return
+    }
+
+    val currentCard = cardsToLearn[currentIndex]
 
     Column(
         modifier = Modifier
@@ -74,7 +110,7 @@ fun FlashCardsScreen(module: Module) {
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Карточка ${currentIndex + 1} из ${module.cards.size}",
+                text = "Карточка ${currentIndex + 1} из ${cardsToLearn.size}",
                 fontSize = 16.sp,
                 color = MaterialTheme.colorScheme.outline
             )
@@ -103,8 +139,9 @@ fun FlashCardsScreen(module: Module) {
                         text = if (isFlipped) currentCard.meaning else currentCard.word,
                         fontSize = 36.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = if (isFlipped) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                        color = if (isFlipped) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer
                     )
+                    Text(currentCard.progress.toString())
                 }
             }
         }
@@ -117,22 +154,87 @@ fun FlashCardsScreen(module: Module) {
         ) {
             OutlinedButton(
                 onClick = {
-                    currentIndex = if (currentIndex > 0) currentIndex - 1 else module.cards.size - 1
+                    currentCard.progress = 0
+                    currentCard.roundsUntilReview = 0
+                    wrongAnswers++
+                    if (currentIndex < cardsToLearn.size - 1) {
+                        currentIndex++
+                    } else {
+                        isFinished = true
+                    }
                     isFlipped = false
                 },
                 modifier = Modifier.weight(1f)
-            ) { Text("Назад") }
+            ) { Text("Не знаю") }
             Spacer(modifier = Modifier.width(16.dp))
             Button(
                 onClick = {
-                    currentIndex = if (currentIndex >= module.cards.size - 1)  0 else currentIndex + 1
+                    currentCard.progress++
+                    currentCard.roundsUntilReview = currentCard.progress
+                    rightAnswers++
+                    if (currentIndex < cardsToLearn.size - 1) {
+                        currentIndex++
+                    } else {
+                        isFinished = true
+                    }
                     isFlipped = false
                 },
                 modifier = Modifier.weight(1f)
-            ) { Text("Дальше")}
+            ) { Text("Знаю") }
         }
     }
+}
 
+@Composable
+fun FinishLearning(rightAnswers: Int, wrongAnswers: Int, onRetry: () -> Unit, onExit: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "Вы прошли модуль!",
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            text = "Всего изучено: ${rightAnswers + wrongAnswers}",
+            fontSize = 20.sp
+        )
+        Text(
+            text = "Знаете: $rightAnswers",
+            fontSize = 18.sp,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = "Не знаете: $wrongAnswers",
+            fontSize = 18.sp,
+            color = MaterialTheme.colorScheme.error
+        )
+        
+        Spacer(modifier = Modifier.height(48.dp))
+        
+        Button(
+            onClick = onRetry,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Продолжить изучение")
+        }
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        OutlinedButton(
+            onClick = onExit,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("На сегодня хватит")
+        }
+    }
 }
 
 @Preview(showBackground = true)
@@ -140,7 +242,7 @@ fun FlashCardsScreen(module: Module) {
 fun MainPreview() {
     FlushCardsTheme {
         FlashCardsScreen(
-            Module("testModule", MutableList<FlashCard>(1) { FlashCard(1, "test", "тестовый") }
-            ))
+            Module("testModule", mutableListOf(FlashCard(1, "test", "тестовый")))
+        )
     }
-} 
+}

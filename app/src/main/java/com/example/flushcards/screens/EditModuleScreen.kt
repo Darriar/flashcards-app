@@ -81,7 +81,7 @@ fun EditModuleScreen(module: Module, onOk: () -> Unit) {
                 module.cards.clear()
                 module.cards.addAll(localCards
                     .filter { it.word.isNotBlank() && it.meaning.isNotBlank() }
-                    .map { card -> FlashCard(card.id, card.word.trim(), card.meaning.trim())}
+                    .map { it.copy(word = it.word.trim(), meaning = it.meaning.trim()) }
                     .distinctBy { it.word.lowercase() })
                 module.name = moduleName
                 onOk()
