@@ -57,11 +57,15 @@ fun CurrentModuleScreen(currentModule: Module, onNavigate: (Screen) -> Unit, set
 
             Button(
                 onClick = {
-                    onNavigate(Screen.Main)
+                    onNavigate(Screen.FlipCards)
                 },
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
-                Text("Изучать")
+                Text("Флеш-карточки")
+            }
+
+            Button(onClick = { onNavigate(Screen.Quiz) }) {
+                Text("С вариантыми ответов")
             }
 
         }

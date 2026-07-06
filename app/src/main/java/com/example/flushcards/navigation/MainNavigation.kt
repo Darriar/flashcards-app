@@ -27,14 +27,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.flushcards.model.Module
 import com.example.flushcards.screens.CurrentModuleScreen
 import com.example.flushcards.screens.EditModuleScreen
-import com.example.flushcards.screens.FlashCardsScreen
+import com.example.flushcards.screens.learningScreens.FlashCardsScreen
 import com.example.flushcards.screens.MyCardsScreen
+import com.example.flushcards.screens.learningScreens.QuizScreen
 import com.example.flushcards.ui.theme.FlushCardsTheme
 
 @Composable
-fun MainNavigation() {
+fun FlipCardsNavigation() {
 
-    var currentScreen by remember {mutableStateOf(Screen.Main)}
+    var currentScreen by remember {mutableStateOf(Screen.FlipCards)}
     val cards = remember {
         mutableStateListOf(
             FlashCard(1, "assess", "оценивать"),
@@ -54,8 +55,8 @@ fun MainNavigation() {
                     tonalElevation = 8.dp
                 ) {
                     NavigationBarItem(
-                        selected = currentScreen == Screen.Main,
-                        onClick = { currentScreen = Screen.Main },
+                        selected = currentScreen == Screen.FlipCards,
+                        onClick = { currentScreen = Screen.FlipCards },
                         icon = { Icon(Icons.Default.Home, contentDescription = "Основное") },
                         label = { Text("Основное") }
                     )
@@ -87,8 +88,12 @@ fun MainNavigation() {
                 .padding(innerPadding)
         ) {
             when (currentScreen) {
-                Screen.Main -> FlashCardsScreen(currentModule,
+                Screen.FlipCards -> FlashCardsScreen(currentModule,
                     onExit = { currentScreen = Screen.MyCards })
+
+                Screen.Quiz -> {
+                    QuizScreen(currentModule) {currentScreen = Screen.MyCards}
+                }
 
                 Screen.MyCards -> MyCardsScreen(modules,
                     onModuleCLick = {module ->
@@ -125,6 +130,6 @@ fun MainNavigation() {
 @Composable
 fun DefaultPreview() {
     FlushCardsTheme {
-        MainNavigation()
+        FlipCardsNavigation()
     }
 }

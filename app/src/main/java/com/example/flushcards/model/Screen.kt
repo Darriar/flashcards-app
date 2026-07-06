@@ -1,7 +1,8 @@
 package com.example.flushcards.model
 
 enum class Screen {
-    Main,
+    FlipCards,
+    Quiz,
     MyCards,
     CurrentModule,
     Profile,
