@@ -31,7 +31,7 @@ import com.example.flushcards.model.Module
 import com.example.flushcards.model.Screen
 
 @Composable
-fun CurrentModuleScreen(currentModule: Module, onNavigate: (Screen) -> Unit, setCurrentModule: (Module) -> Unit, onDelete: (Module) -> Unit) {
+fun CurrentModuleScreen(currentModule: Module, onNavigate: (Screen) -> Unit, onDelete: (Module) -> Unit) {
 
     var menuExpanded by remember { mutableStateOf(false) }
 
@@ -65,7 +65,13 @@ fun CurrentModuleScreen(currentModule: Module, onNavigate: (Screen) -> Unit, set
             }
 
             Button(onClick = { onNavigate(Screen.Quiz) }) {
-                Text("С вариантыми ответов")
+                Text("С вариантами ответов")
+            }
+
+            Button(
+                onClick = {onNavigate(Screen.Match)}
+            ) {
+                Text("Сопоставить")
             }
 
         }
@@ -98,7 +104,7 @@ fun CurrentModuleScreen(currentModule: Module, onNavigate: (Screen) -> Unit, set
                     text = {Text("Удалить")},
                     onClick = {
                         menuExpanded = false
-                        onNavigate(Screen.MyCards)
+                        onNavigate(Screen.MyModules)
                         onDelete(currentModule)
                     }
                 )
@@ -121,5 +127,5 @@ fun CurrentModulePreview() {
     }
     val modules = remember { mutableStateListOf(Module("English words", cards)) }
     var currentModule = Module("textModule", mutableListOf())
-    CurrentModuleScreen(currentModule, onNavigate = {}, setCurrentModule = {}, onDelete = {})
+    CurrentModuleScreen(currentModule, onNavigate = {}, onDelete = {})
 }

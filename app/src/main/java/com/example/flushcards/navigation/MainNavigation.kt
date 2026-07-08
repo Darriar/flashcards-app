@@ -28,7 +28,8 @@ import com.example.flushcards.model.Module
 import com.example.flushcards.screens.CurrentModuleScreen
 import com.example.flushcards.screens.EditModuleScreen
 import com.example.flushcards.screens.learningScreens.FlashCardsScreen
-import com.example.flushcards.screens.MyCardsScreen
+import com.example.flushcards.screens.MyModulesScreen
+import com.example.flushcards.screens.learningScreens.MatchScreen
 import com.example.flushcards.screens.learningScreens.QuizScreen
 import com.example.flushcards.ui.theme.FlushCardsTheme
 
@@ -62,8 +63,8 @@ fun FlipCardsNavigation() {
                     )
 
                     NavigationBarItem(
-                        selected = currentScreen == Screen.MyCards,
-                        onClick = { currentScreen = Screen.MyCards },
+                        selected = currentScreen == Screen.MyModules,
+                        onClick = { currentScreen = Screen.MyModules },
                         icon = {
                             Icon(
                                 Icons.Default.LocalLibrary,
@@ -89,13 +90,17 @@ fun FlipCardsNavigation() {
         ) {
             when (currentScreen) {
                 Screen.FlipCards -> FlashCardsScreen(currentModule,
-                    onExit = { currentScreen = Screen.MyCards })
+                    onExit = { currentScreen = Screen.MyModules })
 
                 Screen.Quiz -> {
-                    QuizScreen(currentModule) {currentScreen = Screen.MyCards}
+                    QuizScreen(currentModule) {currentScreen = Screen.MyModules}
                 }
 
-                Screen.MyCards -> MyCardsScreen(modules,
+                Screen.Match -> {
+                    MatchScreen(currentModule) {currentScreen = Screen.MyModules}
+                }
+
+                Screen.MyModules -> MyModulesScreen(modules,
                     onModuleCLick = {module ->
                         currentModule = module
                         currentScreen = Screen.CurrentModule},
@@ -106,19 +111,18 @@ fun FlipCardsNavigation() {
 
                 Screen.CurrentModule -> CurrentModuleScreen(currentModule,
                     onNavigate = { screen -> currentScreen = screen },
-                    setCurrentModule = {module -> currentModule = module},
                     onDelete = { module ->
                         modules.remove(module)
-                        // If we deleted the current module, update currentModule to the first one left, or a blank one
+
                         if (currentModule == module) {
                             currentModule = if (modules.isNotEmpty()) modules[0] else Module("", mutableListOf())
                         }
-                        currentScreen = Screen.MyCards
+                        currentScreen = Screen.MyModules
                     })
 
                 Screen.Profile -> {}
 
-                Screen.EditModule -> EditModuleScreen(currentModule) { currentScreen = Screen.MyCards }
+                Screen.EditModule -> EditModuleScreen(currentModule) { currentScreen = Screen.MyModules }
             }
     }
 

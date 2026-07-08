@@ -5,14 +5,18 @@ data class FlashCard (
     var word: String,
     var meaning: String,
     var progress: Int = 0,
-    var roundsUntilReview: Int = 0
+    var roundsUntilReview: Int = 0,
+    var isFirstTry: Boolean = true
 ) {
     fun rightAnswer() {
-        progress++
-        roundsUntilReview = progress
+        if (isFirstTry) {
+            progress++
+            roundsUntilReview = progress
+        }
     }
 
     fun wrongAnswer() {
+        isFirstTry = false
         progress = 0
         roundsUntilReview = 0
     }

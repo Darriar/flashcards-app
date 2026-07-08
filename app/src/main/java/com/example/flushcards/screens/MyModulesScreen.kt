@@ -26,7 +26,7 @@ import com.example.flushcards.model.Module
 import com.example.flushcards.ui.theme.FlushCardsTheme
 
 @Composable
-fun MyCardsScreen(modules: MutableList<Module>, onModuleCLick: (module: Module) -> Unit, onAddModule: (Module) -> Unit) {
+fun MyModulesScreen(modules: MutableList<Module>, onModuleCLick: (module: Module) -> Unit, onAddModule: (Module) -> Unit) {
 
     Column(
         modifier = Modifier
@@ -87,7 +87,7 @@ fun MyCardsScreen(modules: MutableList<Module>, onModuleCLick: (module: Module) 
 @Composable
 fun MyCardsPreview() {
     FlushCardsTheme {
-        MyCardsScreen(
+        MyModulesScreen(
             mutableListOf(Module("English", mutableListOf(FlashCard(1, "test", "тестовый")))),
             onModuleCLick = {}, onAddModule = {}
         )
