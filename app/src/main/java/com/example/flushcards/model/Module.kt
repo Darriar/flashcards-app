@@ -9,13 +9,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.sp
 
-// задать минимальный размер при инициализаци в окне карты необходимое колво
 data class Module(
     var name: String,
     var cards: MutableList<FlashCard>
 ) {
 
     fun getCardsToLearn(): MutableList<FlashCard> {
+        cards.forEach { it.resetFirstTry()}
+
         val newCards = cards.filter { it.roundsUntilReview <= 0 }.toMutableList()
         return newCards.ifEmpty { cards }
     }

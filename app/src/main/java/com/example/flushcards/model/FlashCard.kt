@@ -8,6 +8,10 @@ data class FlashCard (
     var roundsUntilReview: Int = 0,
     var isFirstTry: Boolean = true
 ) {
+
+    fun resetFirstTry() {
+        isFirstTry = true
+    }
     fun rightAnswer() {
         if (isFirstTry) {
             progress++

@@ -7,5 +7,5 @@ enum class Screen {
     MyModules,
     CurrentModule,
     Profile,
-    EditModule
+    EditModule,
 }

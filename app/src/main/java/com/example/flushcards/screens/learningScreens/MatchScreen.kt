@@ -43,7 +43,7 @@ fun MatchScreen(module: Module, onExit: () -> Unit) {
         module.getCardsToLearn().shuffled().toMutableList()
     }
 
-    val learnedCards = cardsToLearn.toMutableList()
+    val learnedCards = remember(module, sessionTrigger) {mutableListOf<FlashCard>() }
 
     val currentWords = remember { mutableStateListOf<FlashCard>() }
     val currentMeanings = remember { mutableStateListOf<FlashCard>() }
@@ -90,8 +90,9 @@ fun MatchScreen(module: Module, onExit: () -> Unit) {
                         onClick = {
                             selectedWord = card
                             if (selectedMeaning != null) {
-                                val isCorrect = checkAnswer(cardsToLearn, currentWords, currentMeanings,selectedWord!!, selectedMeaning!!)
-                                if (card.isFirstTry ) {
+                                val isFirstTry = selectedWord!!.isFirstTry
+                                val isCorrect = checkAnswer(cardsToLearn, learnedCards, currentWords, currentMeanings,selectedWord!!, selectedMeaning!!)
+                                if (isFirstTry ) {
                                     if (isCorrect) {
                                         rightAnswers++
                                     }
@@ -120,8 +121,9 @@ fun MatchScreen(module: Module, onExit: () -> Unit) {
                         onClick = {
                             selectedMeaning = card
                             if (selectedWord != null) {
-                                val isCorrect = checkAnswer(cardsToLearn, currentWords, currentMeanings, selectedWord!!, selectedMeaning!!)
-                                if (card.isFirstTry ) {
+                                val isFirstTry = selectedWord!!.isFirstTry
+                                val isCorrect = checkAnswer(cardsToLearn, learnedCards, currentWords, currentMeanings, selectedWord!!, selectedMeaning!!)
+                                if (isFirstTry ) {
                                     if (isCorrect) {
                                         rightAnswers++
                                     }
@@ -150,11 +152,12 @@ fun MatchScreen(module: Module, onExit: () -> Unit) {
     }
 }
 
-fun checkAnswer(cardsToLearn: MutableList<FlashCard>, currentWords: MutableList<FlashCard>, currentMeanings: MutableList<FlashCard>, cardWord: FlashCard, cardMeaning: FlashCard): Boolean {
+fun checkAnswer(cardsToLearn: MutableList<FlashCard>,  learnedCards: MutableList<FlashCard>, currentWords: MutableList<FlashCard>, currentMeanings: MutableList<FlashCard>, cardWord: FlashCard, cardMeaning: FlashCard): Boolean {
 
     val card = cardsToLearn.find { it == cardWord }
     if (cardWord.meaning == cardMeaning.meaning) {
         card!!.rightAnswer()
+        learnedCards.add(card)
 
         cardsToLearn.remove(card)
         currentWords.remove(cardWord)
