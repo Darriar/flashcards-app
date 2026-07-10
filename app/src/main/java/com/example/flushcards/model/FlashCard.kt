@@ -1,5 +1,8 @@
 package com.example.flushcards.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class FlashCard (
     val id: Int,
     var word: String,

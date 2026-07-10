@@ -39,6 +39,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -127,7 +129,7 @@ fun EditModuleScreen(module: Module, onOk: () -> Unit) {
 
         Button(
             onClick = {
-                if (isReadyEnabled) {
+                //if (isReadyEnabled) {
                     module.cards.clear()
                     module.cards.addAll(localCards
                         .filter { it.word.isNotBlank() && it.meaning.isNotBlank() }
@@ -135,9 +137,9 @@ fun EditModuleScreen(module: Module, onOk: () -> Unit) {
                         .distinctBy { it.word.lowercase() })
                     module.name = moduleName
                     onOk()
-                }
+                //}
             },
-            enabled = isReadyEnabled,
+            //enabled = isReadyEnabled,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(16.dp)
@@ -179,6 +181,8 @@ fun CreateCard(card: FlashCard, onWordChange: (String) -> Unit, onMeaningChange:
 
     var suggestedTranslation by remember { mutableStateOf("") }
 
+    var isTextFieldFocused by remember { mutableStateOf(false) }
+
     LaunchedEffect(card.word) {
         val word = card.word
             if (word.isNotBlank()) {
@@ -211,7 +215,7 @@ fun CreateCard(card: FlashCard, onWordChange: (String) -> Unit, onMeaningChange:
         )
 
         AnimatedVisibility(
-            visible = suggestedTranslation.isNotBlank(),
+            visible = suggestedTranslation.isNotBlank() && isTextFieldFocused,
             enter = fadeIn(),
             exit = fadeOut()
         ) {
@@ -230,11 +234,13 @@ fun CreateCard(card: FlashCard, onWordChange: (String) -> Unit, onMeaningChange:
 
         }
 
-
         TextField(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
+                .padding(8.dp)
+                .onFocusChanged { focusState ->
+                    isTextFieldFocused = focusState.isFocused
+                },
             value = card.meaning,
             onValueChange = {newMeaning -> onMeaningChange(newMeaning) },
             label = {
