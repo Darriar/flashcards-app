@@ -70,7 +70,7 @@ fun FlipCardsNavigation() {
 
     Scaffold(
         bottomBar = {
-            if ( currentScreen != Screen.EditModule) {
+            if (false  /*currentScreen != Screen.EditModule*/) {
                 NavigationBar(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant,
                     tonalElevation = 8.dp
