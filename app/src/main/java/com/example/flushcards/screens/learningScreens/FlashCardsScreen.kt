@@ -1,7 +1,10 @@
 package com.example.flushcards.screens.learningScreens
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,13 +12,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -24,10 +26,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,6 +39,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -47,6 +53,7 @@ import com.example.flushcards.R
 import com.example.flushcards.model.FlashCard
 import com.example.flushcards.model.Module
 import com.example.flushcards.ui.theme.FlushCardsTheme
+import kotlinx.coroutines.launch
 
 @Composable
 fun FlashCardsScreen(module: Module, onExit: () -> Unit) {
@@ -106,16 +113,12 @@ fun FlashCardsScreen(module: Module, onExit: () -> Unit) {
             total = cardsToLearn.size,
             onBack = onExit,
         )
-        FlashCardView(
+
+        SwipeableCard(
             card = currentCard,
             isFlipped = isFlipped,
             onFlip = { isFlipped = !isFlipped },
-            modifier = Modifier
-                .weight(1f)
-        )
-
-        FlashCardsFooter(
-            onKnow = {
+            onSwipeLeft = {
                 currentCard.rightAnswer()
                 rightAnswers++
                 isFlipped = false
@@ -124,7 +127,7 @@ fun FlashCardsScreen(module: Module, onExit: () -> Unit) {
                 } else {
                     isFinished = true
                 } },
-            onDontKnow = {
+            onSwipeRight = {
                 currentCard.wrongAnswer()
                 wrongAnswers++
                 isFlipped = false
@@ -208,100 +211,94 @@ fun FlashCardsHeader(
 }
 
 @Composable
-fun FlashCardView(
+fun SwipeableCard(
     card: FlashCard,
     isFlipped: Boolean,
     onFlip: () -> Unit,
-    modifier: Modifier = Modifier
+    onSwipeLeft: () -> Unit,
+    onSwipeRight: () -> Unit,
 ) {
-    Card(
-        modifier = modifier
-            .padding(vertical = 64.dp, horizontal = 32.dp)
-            .fillMaxWidth()
-            .clickable { onFlip() },
-        shape = RoundedCornerShape(32.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(32.dp),
-        ) {
-            Text(
-                text = if (!isFlipped) card.word else card.meaning,
-                fontSize = 40.sp,
-                lineHeight = 46.sp,
-                fontWeight = FontWeight.Medium,
-                fontFamily = FontFamily.Serif,
-                color = Color(0xFF1A1C2E),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.align(Alignment.Center)
-            )
-
-            Text(
-                text = stringResource(id = R.string.tap_to_flip),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.LightGray,
-                modifier = Modifier.align(Alignment.BottomCenter),
-                letterSpacing = 1.sp
-            )
-        }
+    val offsetX = remember { Animatable(0f) }
+    val flipDuration = 400
+    val scope = rememberCoroutineScope()
+    val rotationYs = remember (offsetX.value) {
+         (offsetX.value / 10).coerceIn(-15f, 15f)
     }
-}
-
-@Composable
-fun FlashCardsFooter(
-    onKnow: () -> Unit,
-    onDontKnow: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .padding(horizontal = 16.dp, vertical = 32.dp)
-            .fillMaxWidth()
-            .height(70.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Button(
-            onClick = onDontKnow,
+        Card(
             modifier = Modifier
-                .weight(1f)
-                .height(62.dp),
-            colors = ButtonDefaults.buttonColors(Color(0xFFFFF6ED).copy(alpha = 0.40f)),
-            shape = RoundedCornerShape(32.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = stringResource(id = R.string.i_dont_know),
-                    color = Color(0xFF2E3757),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
+                .padding(vertical = 72.dp, horizontal = 32.dp)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(32.dp))
+                .clickable { onFlip() }
+                .graphicsLayer {
+                    translationX = offsetX.value
+                    scaleX = 1f
+                    scaleY = 1f
+                    rotationY = rotationYs
+                    cameraDistance = 12 * density
+                }
+                .pointerInput(Unit) {
+                    detectHorizontalDragGestures(
+                        onDragEnd = {
+                            when {
+                                offsetX.value > 300f -> {
+                                    scope.launch {
+                                        offsetX.animateTo(1000f, tween(flipDuration))
+                                        offsetX.snapTo(-1000f)
+                                        offsetX.animateTo(0f, tween (flipDuration))
+                                        onSwipeRight()
+                                    }
+                                }
+
+                                offsetX.value < -300f -> {
+                                    scope.launch {
+                                        offsetX.animateTo(-1000f, tween(flipDuration))
+                                        offsetX.snapTo(1000f)
+                                        offsetX.animateTo(0f, tween (flipDuration))
+                                        onSwipeLeft()
+                                    }
+                                }
+
+                                else -> {
+                                    scope.launch { offsetX.animateTo(0f, tween(flipDuration)) }
+                                }
+                            }
+                        }, onHorizontalDrag = { change, dragAmount ->
+                            change.consume()
+                            scope.launch { offsetX.snapTo(offsetX.value + dragAmount) }
+                        }
                     )
-            }
-        }
-
-        Button(
-            onClick = onKnow,
-            modifier = Modifier
-                .weight(1f)
-                .height(62.dp),
-            colors = ButtonDefaults.buttonColors(Color(0xFFDFB48E).copy(alpha = 0.80f)),
-            shape = RoundedCornerShape(32.dp)
+                },
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(32.dp),
+            ) {
                 Text(
-                    text = stringResource(id = R.string.i_know),
-                    color = Color(0xFF4A598C),// color = Color(0xFF2E3757),
-                    style = MaterialTheme.typography.titleMedium,
+                    text = if (!isFlipped) card.word else card.meaning,
+                    fontSize = 38.sp,
+                    lineHeight = 44.sp,
+                    fontWeight = FontWeight.Medium,
+                    fontFamily = FontFamily.Serif,
+                    color = Color(0xFF1A1C2E),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+
+                Text(
+                    text = stringResource(id = R.string.tap_to_flip),
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
+                    color = Color.LightGray,
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                    letterSpacing = 1.sp
                 )
             }
         }
-    }
+
 }
 
 @Preview(showBackground = true)
