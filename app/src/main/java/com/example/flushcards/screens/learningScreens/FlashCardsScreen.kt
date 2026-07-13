@@ -1,7 +1,10 @@
 package com.example.flushcards.screens.learningScreens
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -26,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -45,6 +49,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -107,14 +112,14 @@ fun FlashCardsScreen(module: Module, onExit: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        FlashCardsHeader(
+        FlashCardsHeader (
             title = module.name,
             current = currentIndex + 1,
             total = cardsToLearn.size,
             onBack = onExit,
         )
 
-        SwipeableCard(
+        FlashCardView (
             card = currentCard,
             isFlipped = isFlipped,
             onFlip = { isFlipped = !isFlipped },
@@ -211,7 +216,7 @@ fun FlashCardsHeader(
 }
 
 @Composable
-fun SwipeableCard(
+fun FlashCardView(
     card: FlashCard,
     isFlipped: Boolean,
     onFlip: () -> Unit,
@@ -219,86 +224,113 @@ fun SwipeableCard(
     onSwipeRight: () -> Unit,
 ) {
     val offsetX = remember { Animatable(0f) }
+
+    val cardAlpha = remember { Animatable(0f) }
+
+    var isLabelVisible by remember { mutableStateOf(true) }
     val flipDuration = 400
     val scope = rememberCoroutineScope()
-    val rotationYs = remember (offsetX.value) {
-         (offsetX.value / 10).coerceIn(-15f, 15f)
+    val rotationYs = remember(offsetX.value) {
+        (offsetX.value / 10).coerceIn(-15f, 15f)
     }
-        Card(
-            modifier = Modifier
-                .padding(vertical = 72.dp, horizontal = 32.dp)
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(32.dp))
-                .clickable { onFlip() }
-                .graphicsLayer {
-                    translationX = offsetX.value
-                    scaleX = 1f
-                    scaleY = 1f
-                    rotationY = rotationYs
-                    cameraDistance = 12 * density
-                }
-                .pointerInput(Unit) {
-                    detectHorizontalDragGestures(
-                        onDragEnd = {
-                            when {
-                                offsetX.value > 300f -> {
-                                    scope.launch {
-                                        offsetX.animateTo(1000f, tween(flipDuration))
-                                        offsetX.snapTo(-1000f)
-                                        offsetX.animateTo(0f, tween (flipDuration))
-                                        onSwipeRight()
-                                    }
-                                }
+    
+    LaunchedEffect(card) {
+        isLabelVisible = true
+        offsetX.snapTo(0f)
+        cardAlpha.snapTo(0f)
+        cardAlpha.animateTo(1f, animationSpec = tween(flipDuration))
+    }
 
-                                offsetX.value < -300f -> {
-                                    scope.launch {
-                                        offsetX.animateTo(-1000f, tween(flipDuration))
-                                        offsetX.snapTo(1000f)
-                                        offsetX.animateTo(0f, tween (flipDuration))
-                                        onSwipeLeft()
-                                    }
-                                }
-
-                                else -> {
-                                    scope.launch { offsetX.animateTo(0f, tween(flipDuration)) }
+    Card(
+        modifier = Modifier
+            .padding(vertical = 72.dp, horizontal = 32.dp)
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(32.dp))
+            .clickable { onFlip() }
+            .graphicsLayer {
+                translationX = offsetX.value
+                scaleX = 1f
+                scaleY = 1f
+                rotationY = rotationYs
+                cameraDistance = 12 * density
+                alpha = cardAlpha.value
+            }
+            .pointerInput(card) {
+                detectHorizontalDragGestures(
+                    onDragEnd = {
+                        when {
+                            offsetX.value > 300f -> {
+                                scope.launch {
+                                    isLabelVisible = false
+                                    offsetX.animateTo(1000f, tween(flipDuration))
+                                    onSwipeRight()
                                 }
                             }
-                        }, onHorizontalDrag = { change, dragAmount ->
-                            change.consume()
-                            scope.launch { offsetX.snapTo(offsetX.value + dragAmount) }
+                            offsetX.value < -300f -> {
+                                scope.launch {
+                                    isLabelVisible = false
+                                    offsetX.animateTo(-1000f, tween(flipDuration))
+                                    onSwipeLeft()
+                                }
+                            }
+                            else -> {
+                                scope.launch { offsetX.animateTo(0f, tween(flipDuration)) }
+                            }
                         }
-                    )
-                },
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                    }, onHorizontalDrag = { change, dragAmount ->
+                        change.consume()
+                        scope.launch { offsetX.snapTo(offsetX.value + dragAmount) }
+                    }
+                )
+            },
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(32.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Box(
+            val minOffset = 25
+            this@Card.AnimatedVisibility(
+                visible = isLabelVisible && (offsetX.value > minOffset || offsetX.value < -minOffset),
+                enter = fadeIn(),
+                exit = fadeOut(),
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(32.dp),
+                    .align(Alignment.TopCenter)
+                    .padding(16.dp)
             ) {
                 Text(
-                    text = if (!isFlipped) card.word else card.meaning,
-                    fontSize = 38.sp,
-                    lineHeight = 44.sp,
-                    fontWeight = FontWeight.Medium,
-                    fontFamily = FontFamily.Serif,
-                    color = Color(0xFF1A1C2E),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-
-                Text(
-                    text = stringResource(id = R.string.tap_to_flip),
-                    fontSize = 12.sp,
+                    text = if (offsetX.value > minOffset) stringResource(R.string.i_know) else stringResource(R.string.i_dont_know),
+                    color = (if (offsetX.value > minOffset) Color.Green else Color.Red).copy(alpha = 0.4f),
+                    fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.LightGray,
-                    modifier = Modifier.align(Alignment.BottomCenter),
-                    letterSpacing = 1.sp
+                    style = MaterialTheme.typography.titleMedium
                 )
             }
-        }
 
+            Text(
+                text = if (!isFlipped) card.word else card.meaning,
+                fontSize = 38.sp,
+                lineHeight = 44.sp,
+                fontWeight = FontWeight.Medium,
+                fontFamily = FontFamily.Serif,
+                color = Color(0xFF1A1C2E),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.align(Alignment.Center)
+            )
+
+            Text(
+                text = stringResource(id = R.string.tap_to_flip),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.LightGray,
+                modifier = Modifier.align(Alignment.BottomCenter),
+                letterSpacing = 1.sp
+            )
+        }
+    }
 }
 
 @Preview(showBackground = true)
