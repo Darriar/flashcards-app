@@ -101,11 +101,11 @@ fun FlashCardsScreen(module: Module, onExit: () -> Unit) {
         modifier = Modifier.fillMaxSize()
             .background(
                 brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFFE8EBFA),
-                        Color(0xFFD1D9F0),
-                        Color(0xFFAAB6E0),
-                        Color(0xFF8A98D4)
+                    listOf(
+                        MaterialTheme.colorScheme.background,
+                        MaterialTheme.colorScheme.surface,
+                        MaterialTheme.colorScheme.secondary,
+                        MaterialTheme.colorScheme.primary
                     )
                 )
             ),
@@ -191,7 +191,7 @@ fun FlashCardsHeader(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = "$current ",
-                        color = Color(0xFF7E91D4),
+                        color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp
                     )
@@ -206,9 +206,9 @@ fun FlashCardsHeader(
                     modifier = Modifier
                         .width(48.dp)
                         .height(3.dp),
-                    color = Color(0xFF7E91D4),
-                    trackColor = Color(0xFFE0E0E0),
-                    strokeCap = StrokeCap.Square
+                    color = MaterialTheme.colorScheme.primary,
+                    trackColor =MaterialTheme.colorScheme.surface,
+                    strokeCap = StrokeCap.Round
                 )
             }
         }
