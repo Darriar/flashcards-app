@@ -61,7 +61,7 @@ fun MatchScreen(module: Module, onExit: () -> Unit) {
     if (isFinished) {
         module.finishLearning(learnedCards, wrongAnswers)
 
-        FinishLearning(rightAnswers, wrongAnswers,
+        LearningResultScreen(rightAnswers, wrongAnswers,
             onRetry = {
                 rightAnswers = 0
                 wrongAnswers = 0

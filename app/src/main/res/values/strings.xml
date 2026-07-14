@@ -3,4 +3,11 @@
     <string name="tap_to_flip">TAP TO FLIP</string>
     <string name="i_know">Знаю</string>
     <string name="i_dont_know">Не знаю</string>
+    <string name="you_passed_module">Вы изучили\nмодуль!</string>
+    <string name="great_job">Хорошая работа!\nПродолжайте в том же духе ✨</string>
+    <string name="correct_answers">Верные ответы</string>
+    <string name="wrong_answers">Неверные ответы</string>
+    <string name="total_learned_words">Всего изучено слов</string>
+    <string name="continue_learning">Продолжить изучение</string>
+    <string name="enough_for_today">Достаточно на сегодня</string>
 </resources>

@@ -57,7 +57,11 @@ import androidx.compose.ui.unit.sp
 import com.example.flushcards.R
 import com.example.flushcards.model.FlashCard
 import com.example.flushcards.model.Module
+import com.example.flushcards.ui.theme.CorrectGreen
+import com.example.flushcards.ui.theme.CorrectGreenBg
 import com.example.flushcards.ui.theme.FlushCardsTheme
+import com.example.flushcards.ui.theme.WrongRed
+import com.example.flushcards.ui.theme.WrongRedBg
 import kotlinx.coroutines.launch
 
 @Composable
@@ -79,9 +83,9 @@ fun FlashCardsScreen(module: Module, onExit: () -> Unit) {
     if (isFinished) {
         module.finishLearning(cardsToLearn, wrongAnswers)
 
-        FinishLearning(
-            rightAnswers = rightAnswers,
-            wrongAnswers = wrongAnswers,
+        LearningResultScreen (
+            correctCount = rightAnswers,
+            wrongCount = wrongAnswers,
             onRetry = {
                 sessionTrigger++
                 isFinished = false
@@ -303,7 +307,7 @@ fun FlashCardView(
             ) {
                 Text(
                     text = if (offsetX.value > minOffset) stringResource(R.string.i_know) else stringResource(R.string.i_dont_know),
-                    color = (if (offsetX.value > minOffset) Color.Green else Color.Red).copy(alpha = 0.4f),
+                    color = (if (offsetX.value > minOffset) CorrectGreen else WrongRed).copy(alpha = 0.5f),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.titleMedium
