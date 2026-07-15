@@ -49,9 +49,9 @@ fun QuizScreen(module: Module, onExit: () -> Unit) {
     if (isFinished) {
         module.finishLearning(cardsToLearn, wrongAnswers)
 
-        FinishLearning(
-            rightAnswers = rightAnswers,
-            wrongAnswers = wrongAnswers,
+        LearningResultScreen(
+            rightAnswers,
+            wrongAnswers,
             onRetry = {
                 sessionTrigger++
                 isFinished = false
