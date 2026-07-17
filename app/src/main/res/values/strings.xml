@@ -10,4 +10,5 @@
     <string name="total_learned_words">Всего изучено слов</string>
     <string name="continue_learning">Продолжить изучение</string>
     <string name="enough_for_today">Достаточно на сегодня</string>
+    <string name="quiz_label">Выберите верный вариант ответа</string>
 </resources>

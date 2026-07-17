@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.sp
 import com.example.flushcards.R
 import com.example.flushcards.model.FlashCard
 import com.example.flushcards.model.Module
+import com.example.flushcards.ui.theme.Black
 import com.example.flushcards.ui.theme.ButtonGradientStart
 import com.example.flushcards.ui.theme.CorrectGreen
 import com.example.flushcards.ui.theme.FlushCardsTheme
@@ -357,7 +358,7 @@ fun MatchCard(
                 text = text,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
-                color = Color(0xFF1E2235),
+                color = Black,
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
                 lineHeight = 16.sp,
