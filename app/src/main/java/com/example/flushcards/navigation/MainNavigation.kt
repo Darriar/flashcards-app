@@ -45,7 +45,7 @@ import kotlinx.serialization.json.Json
 @Composable
 fun FlipCardsNavigation() {
 
-    var currentScreen by remember {mutableStateOf(Screen.FlipCards)}
+    var currentScreen by remember {mutableStateOf(Screen.MyModules)}
     val cards = remember {
         mutableStateListOf(
             FlashCard(1, "assess", "оценивать"),
@@ -68,94 +68,59 @@ fun FlipCardsNavigation() {
         }
     }
 
-    Scaffold(
-        bottomBar = {
-            if (false  /*currentScreen != Screen.EditModule*/) {
-                NavigationBar(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    tonalElevation = 8.dp
-                ) {
-                    NavigationBarItem(
-                        selected = currentScreen == Screen.FlipCards,
-                        onClick = { currentScreen = Screen.FlipCards },
-                        icon = { Icon(Icons.Default.Home, contentDescription = "Основное") },
-                        label = { Text("Основное") }
-                    )
+    when (currentScreen) {
 
-                    NavigationBarItem(
-                        selected = currentScreen == Screen.MyModules,
-                        onClick = { currentScreen = Screen.MyModules },
-                        icon = {
-                            Icon(
-                                Icons.Default.LocalLibrary,
-                                contentDescription = "Мои карточки"
-                            )
-                        },
-                        label = { Text("Карточки") }
-                    )
-                    NavigationBarItem(
-                        selected = currentScreen == Screen.Profile,
-                        onClick = { currentScreen = Screen.Profile },
-                        icon = { Icon(Icons.Default.Person, contentDescription = "Профиль") },
-                        label = { Text("Профиль") }
-                    )
-                }
-            }
+        Screen.MyModules -> MyModulesScreen (modules,
+            onModuleCLick = {module ->
+                currentModule = module
+                currentScreen = Screen.CurrentModule},
+            onAddModule = {newModule ->
+                currentModule = newModule
+                currentScreen = Screen.EditModule
+            })
+
+        Screen.FlipCards -> FlashCardsScreen(currentModule,
+            onExit = { currentScreen = Screen.CurrentModule })
+
+        Screen.Quiz -> {
+            QuizScreen(currentModule) {currentScreen = Screen.CurrentModule }
         }
-    ) {
-        innerPadding -> Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            when (currentScreen) {
-                Screen.FlipCards -> FlashCardsScreen(currentModule,
-                    onExit = { currentScreen = Screen.MyModules })
 
-                Screen.Quiz -> {
-                    QuizScreen(currentModule) {currentScreen = Screen.MyModules}
+        Screen.Match -> {
+            MatchScreen(currentModule) {currentScreen = Screen.CurrentModule }
+        }
+
+        Screen.CurrentModule -> CurrentModuleScreen(currentModule,
+            onNavigate = { screen -> currentScreen = screen },
+            onDelete = { module ->
+
+                scope.launch {
+                    val isSucceed = deleteModule(context, module.name)
                 }
-
-                Screen.Match -> {
-                    MatchScreen(currentModule) {currentScreen = Screen.MyModules}
+                modules.remove(module)
+                if (currentModule == module) {
+                    currentModule = if (modules.isNotEmpty()) modules[0] else Module("", mutableListOf())
                 }
+                currentScreen = Screen.MyModules
+            },
+            onExit = { currentScreen = Screen.MyModules })
 
-                Screen.MyModules -> MyModulesScreen(modules,
-                    onModuleCLick = {module ->
-                        currentModule = module
-                        currentScreen = Screen.CurrentModule},
-                    onAddModule = {newModule ->
-                        currentModule = newModule
-                        currentScreen = Screen.EditModule
-                    })
-
-                Screen.CurrentModule -> CurrentModuleScreen(currentModule,
-                    onNavigate = { screen -> currentScreen = screen },
-                    onDelete = { module ->
-
-                        scope.launch {
-                            val isSucceed = deleteModule(context, module.name)
-                        }
-                        modules.remove(module)
-                        if (currentModule == module) {
-                            currentModule = if (modules.isNotEmpty()) modules[0] else Module("", mutableListOf())
-                        }
-                        currentScreen = Screen.MyModules
-                    })
-
-                Screen.Profile -> {}
-
-                Screen.EditModule -> EditModuleScreen(currentModule,
-                    onOk = {
-                        currentScreen = Screen.MyModules
-                        scope.launch {
-                            val jsonContent = Json.encodeToString(currentModule)
-                            val isSucceed = ModuleStorageService.saveModule(context, currentModule.name, jsonContent)
-                        }
-                    })
-
-            }
-    }
+        Screen.EditModule -> EditModuleScreen(currentModule,
+            onOk = {
+                scope.launch {
+                    val jsonContent = Json.encodeToString(currentModule)
+                    val isSucceed = ModuleStorageService.saveModule(context, currentModule.name, jsonContent)
+                }
+                currentScreen = Screen.MyModules
+            },
+            onExit = {
+                if (currentModule.cards.isEmpty()) {
+                    modules.remove(currentModule)
+                    currentScreen = Screen.MyModules
+                } else {
+                    currentScreen = Screen.CurrentModule
+                }
+            })
 
     }
 }

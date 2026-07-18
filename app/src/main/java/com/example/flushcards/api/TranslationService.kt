@@ -20,7 +20,7 @@ object TranslationService {
     suspend fun translate(text: String): String = withContext(Dispatchers.IO) {
         if (text.isBlank()) return@withContext ""
 
-        runCatching {
+       var result = runCatching {
             val response = client.get(GOOGLE_TRANSLATE_URL) {
                 header("User-Agent", "Mozilla/5.0")
                 parameter("client", "gtx")
@@ -34,7 +34,12 @@ object TranslationService {
                 Json.parseToJsonElement(response.bodyAsText())
                     .jsonArray[0].jsonArray
                     .joinToString("") { it.jsonArray[0].jsonPrimitive.content }
-            } else ""
-        }.getOrDefault("")
+            } else { "" }
+       }.getOrDefault("")
+
+        if (result == text) result = ""
+
+        return@withContext result
     }
+
 }

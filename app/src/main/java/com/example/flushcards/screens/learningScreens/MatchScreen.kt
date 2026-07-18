@@ -4,36 +4,15 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.painterResource
@@ -46,10 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.example.flushcards.R
 import com.example.flushcards.model.FlashCard
 import com.example.flushcards.model.Module
-import com.example.flushcards.ui.theme.ButtonGradientStart
-import com.example.flushcards.ui.theme.CorrectGreen
 import com.example.flushcards.ui.theme.FlushCardsTheme
-import com.example.flushcards.ui.theme.WrongRed
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -58,7 +34,7 @@ val CARDS_IN_GROUP = 4
 @Composable
 fun MatchScreen(module: Module, onExit: () -> Unit) {
 
-    if (module.hasNoCards()) return
+    if (module.cards.isEmpty()) return
 
     var sessionTrigger by remember { mutableIntStateOf(0) }
     var isFinished by remember { mutableStateOf(false) }
@@ -104,139 +80,142 @@ fun MatchScreen(module: Module, onExit: () -> Unit) {
         return
     }
 
-
-    Column(
+    Column (
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    listOf(
-                        MaterialTheme.colorScheme.background,
-                        MaterialTheme.colorScheme.surface,
-                        MaterialTheme.colorScheme.secondary,
-                        MaterialTheme.colorScheme.primary
-                    )
-                )
-            )
-            //.background(Color(0xFFF8FAFF))
-            .padding(24.dp),
+            .background(MaterialTheme.colorScheme.background)
+            .padding(horizontal = 16.dp, vertical = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        MatchHeader(module.name, learnedCards.size, cardsCount, onExit)
+    ) {   MatchHeader(module.name, learnedCards.size, cardsCount, onExit)
 
-        Column(
+        Spacer(modifier = Modifier.weight(0.5f))
+
+        Text(
+            text = "Соедините термины и их значения",
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
             modifier = Modifier
-                // .padding(24.dp)
-                .fillMaxSize()
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 16.dp),
+            textAlign = TextAlign.Center
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Spacer(modifier = Modifier.height(100.dp))
+            val scope = rememberCoroutineScope()
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+            var checkedWordCard by remember { mutableStateOf<FlashCard?>(null) }
+            var checkedMeaningCard by remember { mutableStateOf<FlashCard?>(null) }
+            var isPairCorrect by remember { mutableStateOf<Boolean?>(null) }
+
+            val processAnswerResult: (FlashCard, FlashCard, Boolean) -> Unit = { wordCard, meaningCard, isCorrect ->
+                scope.launch {
+                    checkedWordCard = wordCard
+                    checkedMeaningCard = meaningCard
+                    isPairCorrect = isCorrect
+
+                    selectedWord = null
+                    selectedMeaning = null
+
+                    delay(500)
+
+                    if (isCorrect) {
+                        currentWords.remove(wordCard)
+                        currentMeanings.remove(meaningCard)
+                        takeCards(cardsToLearn, currentWords, currentMeanings)
+
+                        if (cardsToLearn.isEmpty() && currentWords.isEmpty()) {
+                            isFinished = true
+                        }
+                    }
+
+                    checkedWordCard = null
+                    checkedMeaningCard = null
+                    isPairCorrect = null
+                }
+            }
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                val scope = rememberCoroutineScope()
+                currentWords.forEach { card ->
+                    val isSelected = selectedWord == card
+                    val isCorrect = if (checkedWordCard == card) isPairCorrect else null
 
-                var checkedWordCard by remember { mutableStateOf<FlashCard?>(null) }
-                var checkedMeaningCard by remember { mutableStateOf<FlashCard?>(null) }
-                var isPairCorrect by remember { mutableStateOf<Boolean?>(null) }
+                    MatchCard(
+                        text = card.word,
+                        isSelected = isSelected,
+                        isCorrect = isCorrect,
+                        onClick = {
+                            if (isPairCorrect != null) return@MatchCard
 
-                val processAnswerResult: (FlashCard, FlashCard, Boolean) -> Unit = { wordCard, meaningCard, isCorrect ->
-                    scope.launch {
-                        checkedWordCard = wordCard
-                        checkedMeaningCard = meaningCard
-                        isPairCorrect = isCorrect
+                            selectedWord = card
+                            if (selectedMeaning != null) {
+                                val meaningCard = selectedMeaning!!
 
-                        selectedWord = null
-                        selectedMeaning = null
+                                val isCorrectResult = checkAnswer(
+                                    card, meaningCard, cardsToLearn, learnedCards,
+                                    onCorrect = { rightAnswers++ },
+                                    onWrong = { wrongAnswers++ })
 
-                        delay(500)
-
-                        if (isCorrect) {
-                            currentWords.remove(wordCard)
-                            currentMeanings.remove(meaningCard)
-                            takeCards(cardsToLearn, currentWords, currentMeanings)
-
-                            if (cardsToLearn.isEmpty()) {
-                                isFinished = true
+                                processAnswerResult(card, meaningCard, isCorrectResult)
                             }
                         }
-
-                        checkedWordCard = null
-                        checkedMeaningCard = null
-                        isPairCorrect = null
-                    }
+                    )
                 }
-                
-                Column(modifier = Modifier.weight(1f)) {
-                    currentWords.forEach { card ->
-                        val isSelected = selectedWord == card
-                        val isCorrect = if (checkedWordCard == card) isPairCorrect else null
+            }
 
-                        MatchCard(
-                            text = card.word,
-                            isSelected = isSelected,
-                            isCorrect = isCorrect,
-                            onClick = {
-                                if (isPairCorrect != null) return@MatchCard
+            Spacer(modifier = Modifier.width(16.dp))
 
-                                selectedWord = card
-                                if (selectedMeaning != null) {
-                                    val meaningCard = selectedMeaning!!
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                currentMeanings.forEach { card ->
+                    val isSelected = selectedMeaning == card
+                    val isCorrect = if (checkedMeaningCard == card) isPairCorrect else null
 
-                                    val isCorrectResult = checkAnswer(
-                                        card, meaningCard, cardsToLearn, learnedCards,
-                                        onCorrect = { rightAnswers++ },
-                                        onWrong = { wrongAnswers++ })
+                    MatchCard(
+                        text = card.meaning,
+                        isSelected = isSelected,
+                        isCorrect = isCorrect,
+                        onClick = {
+                            if (isPairCorrect != null) return@MatchCard
 
-                                    processAnswerResult(card, meaningCard, isCorrectResult)
-                                }
+                            selectedMeaning = card
+                            if (selectedWord != null) {
+                                val wordCard = selectedWord!!
+
+                                val isCorrectResult = checkAnswer(wordCard,
+                                    card, cardsToLearn, learnedCards,
+                                    onCorrect = { rightAnswers++ },
+                                    onWrong = { wrongAnswers++ })
+
+                                processAnswerResult(wordCard, card, isCorrectResult)
                             }
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.width(20.dp))
-
-                Column(modifier = Modifier.weight(1f)) {
-                    currentMeanings.forEach { card ->
-                        val isSelected = selectedMeaning == card
-                        val isCorrect = if (checkedMeaningCard == card) isPairCorrect else null
-
-                        MatchCard(
-                            text = card.meaning,
-                            isSelected = isSelected,
-                            isCorrect = isCorrect,
-                            onClick = {
-                                if (isPairCorrect != null) return@MatchCard
-
-                                selectedMeaning = card
-                                if (selectedWord != null) {
-                                    val wordCard = selectedWord!!
-
-                                    val isCorrectResult = checkAnswer(wordCard,
-                                        card, cardsToLearn, learnedCards,
-                                        onCorrect = { rightAnswers++ },
-                                        onWrong = { wrongAnswers++ })
-
-                                    processAnswerResult(wordCard, card, isCorrectResult)
-                                }
-                            }
-                        )
-                    }
+                        }
+                    )
                 }
             }
         }
+
+        Spacer(modifier = Modifier.weight(1.2f))
     }
+
 }
 
-
-fun checkAnswer(wordCard: FlashCard,
-                meaningCard: FlashCard,
-                cardsToLearn: MutableList<FlashCard>,
-                learnedCards: MutableList<FlashCard>,
-                onCorrect: () -> Unit,
-                onWrong: () -> Unit): Boolean {
+fun checkAnswer(
+    wordCard: FlashCard,
+    meaningCard: FlashCard,
+    cardsToLearn: MutableList<FlashCard>,
+    learnedCards: MutableList<FlashCard>,
+    onCorrect: () -> Unit,
+    onWrong: () -> Unit
+): Boolean {
     val isCorrectResult = wordCard.meaning == meaningCard.meaning
 
     val isFirstTry = wordCard.isFirstTry
@@ -263,56 +242,56 @@ fun MatchHeader(
 ) {
     Surface(
         modifier = Modifier
-            .padding(vertical = 18.dp)
             .fillMaxWidth()
-            .height(80.dp),
-        shape = RoundedCornerShape(40.dp),
-        color = Color.White.copy(alpha = 0.9f),
-        shadowElevation = 8.dp
+            .height(64.dp),
+        shape = RoundedCornerShape(24.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 4.dp
     ) {
-        Row(
+        Row (
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_back),
                 contentDescription = "Back",
                 modifier = Modifier
-                    .size(32.dp)
+                    .size(28.dp)
                     .clip(CircleShape)
                     .clickable { onBack() },
-                tint = Color.DarkGray,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(10.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween
+                verticalArrangement = Arrangement.Center
             ) {
-                Spacer(modifier = Modifier)
-
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color.DarkGray,
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
 
+                Spacer(modifier = Modifier.height(6.dp))
+
                 LinearProgressIndicator(
-                    progress = { current.toFloat() / total },
+                    progress = { if (total > 0) current.toFloat() / total else 0f },
                     modifier = Modifier
-                        .width(170.dp)
-                        .height(5.dp),
+                        .width(140.dp)
+                        .height(6.dp),
                     color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.surface,
+                    trackColor = MaterialTheme.colorScheme.outlineVariant,
                     strokeCap = StrokeCap.Round,
                 )
             }
+
+            Spacer(modifier = Modifier)
         }
     }
 }
@@ -324,97 +303,113 @@ fun MatchCard(
     isCorrect: Boolean?,
     onClick: () -> Unit,
 ) {
+
     val cardColor by animateColorAsState(
-        targetValue =
-            if (isSelected)
-                MaterialTheme.colorScheme.primary
-            else if (isCorrect == true)
-                CorrectGreen.copy(alpha = 0.5f)
-            else if (isCorrect == false)
-                WrongRed.copy(alpha = 0.5f)
-            else
-                Color.White
+        targetValue = when {
+            isSelected -> MaterialTheme.colorScheme.primary
+            isCorrect == true -> MaterialTheme.colorScheme.tertiaryContainer
+            isCorrect == false -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f)
+            else -> MaterialTheme.colorScheme.surface
+        },
+        label = "CardColorAnimation"
     )
+
+    val textColor by animateColorAsState(
+        targetValue = when {
+            isSelected -> MaterialTheme.colorScheme.onPrimary
+            isCorrect == true -> MaterialTheme.colorScheme.onTertiaryContainer
+            isCorrect == false -> MaterialTheme.colorScheme.onErrorContainer
+            else -> MaterialTheme.colorScheme.onSurface
+        },
+        label = "TextColorAnimation"
+    )
+
+    val borderStroke = when {
+        isSelected -> BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+        isCorrect == true -> BorderStroke(2.dp, MaterialTheme.colorScheme.tertiary)
+        isCorrect == false -> BorderStroke(2.dp, MaterialTheme.colorScheme.error)
+        else -> BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    }
 
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(84.dp)
+            .height(72.dp)
+            .clip(RoundedCornerShape(16.dp))
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        color = cardColor,//if (isSelected) MaterialTheme.colorScheme.primary else Color.White,
-        shadowElevation = 0.dp,
-        //border = if (isSelected) BorderStroke(2.dp, ButtonGradientStart) else null
+        shape = RoundedCornerShape(16.dp),
+        color = cardColor,
+        border = borderStroke,
+        shadowElevation = 0.dp
     ) {
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+                .padding(12.dp),
+            contentAlignment = Alignment.Center
         ) {
             Text(
                 text = text,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color(0xFF1E2235),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = textColor,
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
-                lineHeight = 16.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(5.dp)
+                lineHeight = 18.sp,
+                textAlign = TextAlign.Center
             )
         }
     }
-
-    Spacer(modifier = Modifier.height(24.dp))
 }
 
-fun takeCards(cardsToLearn: MutableList<FlashCard>, currentWords: MutableList<FlashCard>, currentMeanings: MutableList<FlashCard>) {
+fun takeCards(
+    cardsToLearn: MutableList<FlashCard>,
+    currentWords: MutableList<FlashCard>,
+    currentMeanings: MutableList<FlashCard>
+) {
+    if (cardsToLearn.isEmpty()) return
 
-    if (cardsToLearn.size < CARDS_IN_GROUP) return
+    val remainingWords = cardsToLearn.filter { !currentWords.contains(it) }
+    if (remainingWords.isEmpty()) return
 
-    val newCardWord = cardsToLearn
-        .filter { !currentWords.contains(it) }
-        .shuffled()
-        .first()
+    val newCardWord = remainingWords.shuffled().first()
     currentWords.add(newCardWord)
 
     var hasMatch = false
-
-    for (cardWord in currentWords){
+    for (cardWord in currentWords) {
         for (cardMeaning in currentMeanings) {
-            if (cardWord.meaning == cardMeaning.meaning)   {
+            if (cardWord.meaning == cardMeaning.meaning) {
                 hasMatch = true
                 break
             }
         }
     }
 
-    var cardsToShuffle: MutableList<FlashCard> = cardsToLearn.toMutableList()
-    if (hasMatch)
+    var cardsToShuffle = cardsToLearn.toMutableList()
+    if (hasMatch) {
         cardsToShuffle = cardsToLearn.filter { !currentMeanings.contains(it) }.toMutableList()
+    }
 
-    val newCardMeaning = cardsToShuffle
-        .shuffled()
-        .first()
-    currentMeanings.add(newCardMeaning)
-
+    if (cardsToShuffle.isNotEmpty()) {
+        val newCardMeaning = cardsToShuffle.shuffled().first()
+        currentMeanings.add(newCardMeaning)
+    }
 }
 
+@Preview(showBackground = true)
+@Composable
+fun MatchScreenPreview() {
+    val cards = mutableListOf(
+        FlashCard(1, "Brave", "Showing courage in the face of danger."),
+        FlashCard(2, "Generous", "Willing to give more of something to others."),
+        FlashCard(3, "Patient", "Not easily upset and able to wait calmly."),
+        FlashCard(4, "Curious", "Eager to know or learn about something.")
+    )
 
-    @Preview(showBackground = true)
-    @Composable
-    fun MatchScreenPreview() {
-        val cards = mutableListOf(
-            FlashCard(1, "Brave", "Showing courage in the face of danger."),
-            FlashCard(2, "Generous", "Willing to give more of something to others."),
-            FlashCard(3, "Patient", "Not easily upset and able to wait calmly."),
-            FlashCard(4, "Curious", "Eager to know or learn about something.")
-        )
-
-        val module = Module("Match Test", cards)
+    val module = Module("Match Test", cards)
+    MaterialTheme() {
         FlushCardsTheme {
             MatchScreen(module = module, onExit = {})
         }
     }
+}

@@ -12,20 +12,26 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
-private val LightColorScheme = lightColorScheme(
-    background = BlueGrad1,
-    surface = BlueGrad2,
-    secondary = BlueGrad3,
-    primary = BlueGrad4,
+val LightColorScheme = lightColorScheme(
+    primary = PrimaryIndigo,
+    onPrimary = OnPrimaryWhite,
+    background = BackgroundScreen,
+    surface = SurfaceCard,
+    surfaceVariant = SurfaceCard, // Используем для карточек
+    outlineVariant = OutlineVariant,
 
-    onBackground = Color(0xFF141722),
+    // Передаем зеленый цвет в Tertiary роли
+    tertiary = SuccessGreen,
+    tertiaryContainer = SuccessContainerGreen,
+    onTertiaryContainer = SuccessGreen,
+
+    // Передаем красный цвет в Error роли
+    error = ErrorRed,
+    errorContainer = ErrorContainerRed,
+    onErrorContainer = OnErrorText
 )
 
 private val DarkColorScheme = darkColorScheme(
-    background = BlueDarkGrad1,
-    surface = BlueDarkGrad2,
-    secondary = BlueDarkGrad3,
-    primary = BlueDarkGrad4,
 
     onBackground = Color(0xFFE8EBFA),
 )

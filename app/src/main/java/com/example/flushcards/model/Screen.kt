@@ -6,6 +6,5 @@ enum class Screen {
     Match,
     MyModules,
     CurrentModule,
-    Profile,
     EditModule,
 }
