@@ -15,13 +15,19 @@ import kotlinx.serialization.Serializer
 @Serializable
 data class Module(
     var name: String,
-    var cards: MutableList<FlashCard>
+    var cards: MutableList<FlashCard>,
+    var isTermFirst: Boolean = true
 ) {
 
     fun getCardsToLearn(): MutableList<FlashCard> {
         cards.forEach { it.resetFirstTry()}
 
-        val newCards = cards.filter { it.roundsUntilReview <= 0 }.toMutableList()
+        var newCards = cards.filter { it.roundsUntilReview <= 0 }.toMutableList()
+        if (!isTermFirst) {
+            newCards.forEach { card ->
+                card.word = card.meaning.also { card.meaning = card.word }
+            }
+        }
         return newCards.ifEmpty { cards }
     }
 
@@ -35,22 +41,19 @@ data class Module(
             cards.forEach { if (!cardsToLearn.contains(it)) it.roundsUntilReview-- }
     }
 
-    @Composable
-    fun hasNoCards(): Boolean {
-
-        if (cards.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "В этом модуле нет карточек",
-                    fontSize = 20.sp,
-                    color = MaterialTheme.colorScheme.outline
-                )
-            }
+    fun resetProgress() {
+        cards.forEach {
+            it.progress = 0
+            it.roundsUntilReview = 0
         }
-        return cards.isEmpty()
+    }
+
+    fun showTermFirst() {
+        isTermFirst = true
+    }
+
+    fun showMeaningFirst() {
+        isTermFirst = false
     }
 
 }

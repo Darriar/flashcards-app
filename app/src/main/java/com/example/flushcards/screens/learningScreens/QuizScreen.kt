@@ -1,25 +1,21 @@
 package com.example.flushcards.screens.learningScreens
 
-import android.R
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -30,8 +26,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -42,14 +36,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.flushcards.model.FlashCard
 import com.example.flushcards.model.Module
-import com.example.flushcards.ui.theme.Black
+import com.example.flushcards.ui.theme.FlushCardsTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.inc
+import kotlin.text.compareTo
 
 @Composable
 fun QuizScreen(module: Module, onExit: () -> Unit) {
 
-    if (module.hasNoCards()) return
+    if (module.cards.isEmpty()) return
 
     var sessionTrigger by remember { mutableIntStateOf(0) }
     var isFinished by remember { mutableStateOf(false) }
@@ -83,7 +79,7 @@ fun QuizScreen(module: Module, onExit: () -> Unit) {
     }
 
     val currentCard = cardsToLearn[currentIndex]
-    
+
     val answers = remember(currentCard) {
         (module.cards
             .filter { it.meaning != currentCard.meaning }
@@ -96,81 +92,65 @@ fun QuizScreen(module: Module, onExit: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    listOf(
-                        MaterialTheme.colorScheme.background,
-                        MaterialTheme.colorScheme.surface,
-                        MaterialTheme.colorScheme.secondary,
-                        MaterialTheme.colorScheme.primary
-                    )
-                )
-            ),
+            .background(MaterialTheme.colorScheme.background)
+            .padding(horizontal = 16.dp, vertical = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        FlashCardsHeader(module.name, currentIndex + 1, cardsToLearn.size, onBack = { onExit() })
+        FlashCardsHeader(
+            title = module.name,
+            current = currentIndex + 1,
+            total = cardsToLearn.size,
+            onBack = { onExit() }
+        )
 
+        Spacer(modifier = Modifier.height(24.dp))
 
-        Row (
+        Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 24.dp, top = 42.dp, bottom = 16.dp, end = 24.dp)
-                .clip(RoundedCornerShape(20.dp))
-                .background(Color.Transparent),
-                //.background(MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = currentCard.word,
-                color = Black,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(10.dp)
-                )
-        }
-
-        Row (
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .clip(RoundedCornerShape(20.dp))
-                .background(Color.Transparent),
-            //.background(MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)),
-            horizontalArrangement = Arrangement.Start,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(id = com.example.flushcards.R.string.quiz_label),
-                color = Black,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(10.dp)
+                .padding(horizontal = 8.dp),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
             )
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 40.dp, horizontal = 24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = currentCard.word,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
 
-       // Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Text(
+            text = stringResource(id = com.example.flushcards.R.string.quiz_label),
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 12.dp),
+            textAlign = TextAlign.Start
+        )
 
         Column(
-            modifier = Modifier
-                .fillMaxWidth(),
-            verticalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             answers.forEach { answer ->
-                val buttonColor = when {
-                    selectedAnswer == answer && answer == currentCard.meaning ->
-                        ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-
-                    selectedAnswer == answer ->
-                        ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-
-                    else -> ButtonDefaults.buttonColors()
-                }
-
-                OutlinedButton(
-                    onClick = {
-                        if (selectedAnswer != null) return@OutlinedButton
+                AnswerCard(answer, selectedAnswer, currentCard,
+                    onClick =  {
                         selectedAnswer = answer
                         if (answer == currentCard.meaning) {
                             currentCard.rightAnswer()
@@ -181,7 +161,7 @@ fun QuizScreen(module: Module, onExit: () -> Unit) {
                         }
 
                         scope.launch {
-                            delay(500)
+                            delay(600)
                             selectedAnswer = null
                             if (currentIndex < cardsToLearn.size - 1) {
                                 currentIndex++
@@ -189,47 +169,83 @@ fun QuizScreen(module: Module, onExit: () -> Unit) {
                                 isFinished = true
                             }
                         }
-                    },
-                    //colors = buttonColor,
-                    shape = RoundedCornerShape(18.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(80.dp)
-                        .padding(horizontal = 24.dp, vertical = 10.dp)
-                        .border(
-                            color = Color.LightGray,
-                            width = 2.dp,
-                            shape = RoundedCornerShape(18.dp)
-                        )
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.CenterStart
-                    ) {
-                        Text(
-                            text = answer,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Black,
-                            maxLines = 3,
-                            overflow = TextOverflow.Ellipsis,
-                            lineHeight = 18.sp,
-                            modifier = Modifier.padding(5.dp)
-                        )
-                    }
-                }
+                    })
             }
         }
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.weight(1f))
+
+    }
+}
+
+@Composable
+fun AnswerCard(answer: String, selectedAnswer: String?, currentCard: FlashCard, onClick: () -> Unit) {
+    val isCurrent = selectedAnswer == answer
+    val isCorrect = answer == currentCard.meaning
+
+    val buttonColors = when {
+        (isCurrent && isCorrect) || (selectedAnswer != null && isCorrect) -> ButtonDefaults.outlinedButtonColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.8f),
+            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+        )
+        isCurrent && !isCorrect -> ButtonDefaults.outlinedButtonColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f),
+            contentColor = MaterialTheme.colorScheme.onErrorContainer
+        )
+        else -> {
+            ButtonDefaults.outlinedButtonColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+
+    val borderColors = when {
+        (isCurrent && isCorrect) || (selectedAnswer != null && isCorrect) -> Color(0xFF81C784)
+        isCurrent && !isCorrect -> MaterialTheme.colorScheme.error
+        else -> MaterialTheme.colorScheme.outlineVariant
+    }
+
+    OutlinedButton(
+        onClick = {
+            if (selectedAnswer != null) return@OutlinedButton
+            onClick()
+        },
+        colors = buttonColors,
+        shape = RoundedCornerShape(18.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(64.dp)
+            .padding(horizontal = 8.dp),
+        border = BorderStroke(
+            width = 2.dp,
+            color = borderColors
+        )
+    ) {
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            Text(
+                text = answer,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                lineHeight = 20.sp,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+        }
     }
 }
 
 @Preview(showBackground = true)
 @Composable
 fun QuizScreenPreview() {
-    QuizScreen(
-        Module("testModule", mutableListOf(FlashCard(1, "test", "тестовый"))),
-        onExit = {}
-    )
+    FlushCardsTheme {
+        QuizScreen(
+            Module("testModule", mutableListOf(FlashCard(1, "test", "тестовый"))),
+            onExit = {}
+        )
+    }
 }

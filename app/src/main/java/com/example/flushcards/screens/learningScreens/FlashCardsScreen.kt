@@ -12,10 +12,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -30,7 +30,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -40,34 +39,27 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.flushcards.R
 import com.example.flushcards.model.FlashCard
 import com.example.flushcards.model.Module
-import com.example.flushcards.ui.theme.CorrectGreen
-import com.example.flushcards.ui.theme.CorrectGreenBg
 import com.example.flushcards.ui.theme.FlushCardsTheme
-import com.example.flushcards.ui.theme.WrongRed
-import com.example.flushcards.ui.theme.WrongRedBg
 import kotlinx.coroutines.launch
 
 @Composable
 fun FlashCardsScreen(module: Module, onExit: () -> Unit) {
 
-    if (module.hasNoCards()) return
+    if (module.cards.isEmpty()) return
 
     var sessionTrigger by remember { mutableIntStateOf(0) }
     var isFinished by remember { mutableStateOf(false) }
@@ -83,7 +75,7 @@ fun FlashCardsScreen(module: Module, onExit: () -> Unit) {
     if (isFinished) {
         module.finishLearning(cardsToLearn, wrongAnswers)
 
-        LearningResultScreen (
+        LearningResultScreen(
             correctCount = rightAnswers,
             wrongCount = wrongAnswers,
             onRetry = {
@@ -102,28 +94,22 @@ fun FlashCardsScreen(module: Module, onExit: () -> Unit) {
     val currentCard = cardsToLearn[currentIndex]
 
     Column(
-        modifier = Modifier.fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    listOf(
-                        MaterialTheme.colorScheme.background,
-                        MaterialTheme.colorScheme.surface,
-                        MaterialTheme.colorScheme.secondary,
-                        MaterialTheme.colorScheme.primary
-                    )
-                )
-            ),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(horizontal = 16.dp, vertical = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        FlashCardsHeader (
+        FlashCardsHeader(
             title = module.name,
             current = currentIndex + 1,
             total = cardsToLearn.size,
             onBack = onExit,
         )
 
-        FlashCardView (
+        Spacer(modifier = Modifier.weight(1f))
+
+        FlashCardView(
             card = currentCard,
             isFlipped = isFlipped,
             onFlip = { isFlipped = !isFlipped },
@@ -135,7 +121,8 @@ fun FlashCardsScreen(module: Module, onExit: () -> Unit) {
                     currentIndex++
                 } else {
                     isFinished = true
-                } },
+                }
+            },
             onSwipeRight = {
                 currentCard.wrongAnswer()
                 wrongAnswers++
@@ -144,10 +131,15 @@ fun FlashCardsScreen(module: Module, onExit: () -> Unit) {
                     currentIndex++
                 } else {
                     isFinished = true
-                } }
+                }
+            }
         )
+
+        Spacer(modifier = Modifier.weight(1f))
     }
+
 }
+
 @Composable
 fun FlashCardsHeader(
     title: String,
@@ -157,35 +149,40 @@ fun FlashCardsHeader(
 ) {
     Surface(
         modifier = Modifier
-            .padding(18.dp)
             .fillMaxWidth()
-            .height(80.dp),
-        shape = RoundedCornerShape(40.dp),
-        color = Color.White.copy(alpha = 0.9f),
-        shadowElevation = 8.dp
+            .height(64.dp),
+        shape = RoundedCornerShape(24.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 4.dp
     ) {
-        Row(
+        Row (
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_back),
                 contentDescription = "Back",
                 modifier = Modifier
-                    .size(32.dp)
+                    .size(28.dp)
                     .clip(CircleShape)
                     .clickable { onBack() },
-                tint = Color.DarkGray,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = Color.DarkGray,
-                fontWeight = FontWeight.Bold
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 12.dp),
+                textAlign = TextAlign.Center
             )
 
             Column(
@@ -197,21 +194,25 @@ fun FlashCardsHeader(
                         text = "$current ",
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
+                        fontSize = 15.sp
                     )
                     Text(
                         text = "/ $total",
-                        color = Color.Gray,
-                        fontSize = 14.sp
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium
                     )
                 }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
                 LinearProgressIndicator(
-                    progress = { current.toFloat() / total },
+                    progress = { if (total > 0) current.toFloat() / total else 0f },
                     modifier = Modifier
                         .width(48.dp)
-                        .height(3.dp),
+                        .height(5.dp),
                     color = MaterialTheme.colorScheme.primary,
-                    trackColor =MaterialTheme.colorScheme.surface,
+                    trackColor = MaterialTheme.colorScheme.outlineVariant,
                     strokeCap = StrokeCap.Round
                 )
             }
@@ -228,16 +229,14 @@ fun FlashCardView(
     onSwipeRight: () -> Unit,
 ) {
     val offsetX = remember { Animatable(0f) }
-
     val cardAlpha = remember { Animatable(0f) }
-
     var isLabelVisible by remember { mutableStateOf(true) }
     val flipDuration = 400
     val scope = rememberCoroutineScope()
     val rotationYs = remember(offsetX.value) {
         (offsetX.value / 10).coerceIn(-15f, 15f)
     }
-    
+
     LaunchedEffect(card) {
         isLabelVisible = true
         offsetX.snapTo(0f)
@@ -247,14 +246,13 @@ fun FlashCardView(
 
     Card(
         modifier = Modifier
-            .padding(vertical = 72.dp, horizontal = 32.dp)
             .fillMaxWidth()
-            .clip(RoundedCornerShape(32.dp))
+            .height(420.dp)
+            .padding(horizontal = 16.dp)
+            .clip(RoundedCornerShape(28.dp))
             .clickable { onFlip() }
             .graphicsLayer {
                 translationX = offsetX.value
-                scaleX = 1f
-                scaleY = 1f
                 rotationY = rotationYs
                 cameraDistance = 12 * density
                 alpha = cardAlpha.value
@@ -287,49 +285,53 @@ fun FlashCardView(
                     }
                 )
             },
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(32.dp),
+                .padding(24.dp),
             contentAlignment = Alignment.Center
         ) {
             val minOffset = 25
+
             this@Card.AnimatedVisibility(
                 visible = isLabelVisible && (offsetX.value > minOffset || offsetX.value < -minOffset),
                 enter = fadeIn(),
                 exit = fadeOut(),
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .padding(16.dp)
+                    .padding(top = 16.dp)
             ) {
                 Text(
                     text = if (offsetX.value > minOffset) stringResource(R.string.i_know) else stringResource(R.string.i_dont_know),
-                    color = (if (offsetX.value > minOffset) CorrectGreen else WrongRed).copy(alpha = 0.5f),
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.titleMedium
+                    color = if (offsetX.value > minOffset) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
                 )
             }
 
             Text(
                 text = if (!isFlipped) card.word else card.meaning,
-                fontSize = 38.sp,
-                lineHeight = 44.sp,
-                fontWeight = FontWeight.Medium,
-                fontFamily = FontFamily.Serif,
-                color = Color(0xFF1A1C2E),
+                fontSize = 30.sp,
+                lineHeight = 36.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.align(Alignment.Center)
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(horizontal = 16.dp)
             )
 
             Text(
                 text = stringResource(id = R.string.tap_to_flip),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.LightGray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
                 modifier = Modifier.align(Alignment.BottomCenter),
                 letterSpacing = 1.sp
             )
@@ -353,4 +355,3 @@ fun FlashCardsScreenPreview() {
         )
     }
 }
-

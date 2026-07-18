@@ -1,27 +1,25 @@
 package com.example.flushcards.screens.learningScreens
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -29,7 +27,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.flushcards.R
-import com.example.flushcards.ui.theme.*
+import com.example.flushcards.ui.theme.FlushCardsTheme
 
 @Composable
 fun LearningResultScreen(
@@ -38,86 +36,59 @@ fun LearningResultScreen(
     onRetry: () -> Unit = {},
     onExit: () -> Unit = {},
 ) {
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(MaterialTheme.colorScheme.background,
-                        MaterialTheme.colorScheme.primary
-                        )//Color(0xFFF5F7FF), Color(0xFFFFFFFF))
-                )
-            )
+            .background(MaterialTheme.colorScheme.background)
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            drawCircle(
-                color = Color(0xFFE8EBFA).copy(alpha = 0.5f),
-                radius = 374.dp.toPx(),
-                center = center.copy(y = -115.dp.toPx())
-            )
-        }
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        Spacer(modifier = Modifier.weight(0.4f))
 
         Box(
             modifier = Modifier
-                .size(145.dp)
-                .padding(16.dp)
+                .size(120.dp)
                 .clip(CircleShape)
-                .background(color = ButtonGradientStart),
+                .background(color = MaterialTheme.colorScheme.primary),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 Icons.Default.Check,
                 contentDescription = "OK",
-                tint = Color.White,
-                modifier = Modifier.size(50.dp)
-                )
+                tint = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier.size(56.dp)
+            )
         }
+
+        Spacer(modifier = Modifier.height(32.dp))
 
         Text(
             text = stringResource(R.string.you_passed_module),
-            fontSize = 32.sp,
-            fontWeight = FontWeight.ExtraBold,
-            lineHeight = 36.sp,
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold,
+            lineHeight = 34.sp,
             textAlign = TextAlign.Center,
-            color = Black,
+            color = MaterialTheme.colorScheme.onBackground,
         )
 
         Text(
             text = stringResource(R.string.great_job),
             fontSize = 16.sp,
-            color = Color.Gray,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 18.dp, bottom = 40.dp)
+            modifier = Modifier.padding(top = 12.dp)
         )
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            StatCard(
-                count = correctCount,
-                label = stringResource(R.string.correct_answers),
-                color = CorrectGreen,
-                modifier = Modifier.weight(1f)
-            )
-            StatCard(
-                count = wrongCount,
-                label = stringResource(R.string.wrong_answers),
-                color = WrongRed,
-                modifier = Modifier.weight(1f)
-            )
-        }
+        Spacer(modifier = Modifier.weight(0.6f))
 
-        Spacer(modifier = Modifier.height(16.dp))
+
+        DetailedStatCard(
+            correctCount = correctCount,
+            wrongCount = wrongCount
+        )
+
+        Spacer(modifier = Modifier.height(14.dp))
 
         LearnedWordsCard(
             count = correctCount + wrongCount,
@@ -126,55 +97,96 @@ fun LearningResultScreen(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        GradientActionButton(
+        PrimaryActionButton(
             text = stringResource(R.string.continue_learning),
             onClick = onRetry,
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         SecondaryActionButton(
             text = stringResource(R.string.enough_for_today),
             onClick = onExit,
         )
-        
-        Spacer(modifier = Modifier.height(60.dp))
-        }
+
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
 @Composable
-fun StatCard(
-    count: Int,
-    label: String,
-    color: Color,
+fun DetailedStatCard(
+    correctCount: Int,
+    wrongCount: Int,
     modifier: Modifier = Modifier
 ) {
-    Surface(
-        modifier = modifier.height(100.dp),
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(96.dp),
         shape = RoundedCornerShape(24.dp),
-        color = Color.White,
-        shadowElevation = 4.dp
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = count.toString(),
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = color
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = correctCount.toString(),
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.tertiary
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = stringResource(R.string.correct_answers),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            VerticalDivider(
+                modifier = Modifier
+                    .height(48.dp),
+                thickness = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant
             )
-            Text(
-                text = label,
-                fontSize = 14.sp,
-                color = Color.Gray,
-                textAlign = TextAlign.Center
-            )
+
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = wrongCount.toString(),
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.error
+                )
+
+                Spacer(modifier = Modifier.height(2.dp))
+
+                Text(
+                    text = stringResource(R.string.wrong_answers),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
 }
@@ -184,42 +196,50 @@ fun LearnedWordsCard(
     count: Int,
     label: String
 ) {
-    Surface(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(100.dp),
+            .height(96.dp),
         shape = RoundedCornerShape(24.dp),
-        color = Color.White,
-        shadowElevation = 4.dp
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = 20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(56.dp)
-                    .background(LearnedBlueBg, RoundedCornerShape(16.dp)),
+                    .size(48.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = RoundedCornerShape(14.dp)
+                    ),
                 contentAlignment = Alignment.Center
             ) {
-                // Icon Placeholder
-                Icon(Icons.AutoMirrored.Default.MenuBook, contentDescription = label)
-               // Box(modifier = Modifier.size(28.dp).background(color, RoundedCornerShape(4.dp)))
+                Icon(
+                    imageVector = Icons.AutoMirrored.Default.MenuBook,
+                    contentDescription = label,
+                    tint = MaterialTheme.colorScheme.primary
+                )
             }
-            Spacer(modifier = Modifier.width(20.dp))
+            Spacer(modifier = Modifier.width(16.dp))
             Column {
                 Text(
                     text = count.toString(),
-                    fontSize = 28.sp,
+                    fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Black
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = label,
-                    fontSize = 14.sp,
-                    color = Color.Gray
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
             }
         }
@@ -227,22 +247,18 @@ fun LearnedWordsCard(
 }
 
 @Composable
-fun GradientActionButton(
+fun PrimaryActionButton(
     text: String,
     onClick: () -> Unit
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(64.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .background(
-                Brush.horizontalGradient(
-                    colors = listOf(ButtonGradientStart, ButtonGradientEnd)
-                )
-            )
+            .height(60.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(MaterialTheme.colorScheme.primary)
             .clickable(onClick = onClick)
-            .padding(horizontal = 18.dp),
+            .padding(horizontal = 20.dp),
         contentAlignment = Alignment.Center
     ) {
         Row(
@@ -250,21 +266,20 @@ fun GradientActionButton(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-
-            Spacer(modifier = Modifier)
+            Spacer(modifier = Modifier.width(30.dp))
 
             Text(
                 text = text,
-                color = Color.White,
-                fontSize = 18.sp,
+                color = MaterialTheme.colorScheme.onPrimary,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
-            
 
-            Icon(Icons.AutoMirrored.Default.KeyboardArrowRight,
-                contentDescription = "exit",
-                tint = Color.White,
-                modifier = Modifier.size(30.dp)
+            Icon(
+                imageVector = Icons.AutoMirrored.Default.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier.size(28.dp)
             )
         }
     }
@@ -278,19 +293,22 @@ fun SecondaryActionButton(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(64.dp)
-            .border(1.dp, Color.LightGray.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
-            .clip(RoundedCornerShape(20.dp))
-            .background(color = LearnedBlueBg)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 24.dp),
+            .height(60.dp)
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant,
+                shape = RoundedCornerShape(18.dp)
+            )
+            .clip(RoundedCornerShape(18.dp))
+            .background(color = MaterialTheme.colorScheme.surface)
+            .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = text,
-            color = Color(0xFF1E2235),
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
             textAlign = TextAlign.Center
         )
     }
