@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,10 +14,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowRight
 import androidx.compose.material.icons.filled.Delete
@@ -28,6 +30,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -61,55 +64,95 @@ fun CurrentModuleScreen(
     onDelete: (Module) -> Unit,
     onExit: () -> Unit
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
+    val cardsInfoState = rememberLazyListState()
+
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 16.dp, vertical = 32.dp)
-            .verticalScroll(rememberScrollState())
     ) {
-
-        CurrentScreenHeader(currentModule, onNavigate, onDelete, onExit)
-
-
-        Text(
-            text = "В этом модуле карточек: ${currentModule.cards.size}",
-            fontSize = 14.sp,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(bottom = 24.dp, top = 12.dp)
-        )
-
-        Text(
-            text = "Режимы обучения",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground,
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 8.dp)
-        )
+                .fillMaxSize()
+                .padding(horizontal = 16.dp, vertical = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            CurrentScreenHeader(currentModule, onNavigate, onDelete, onExit)
 
-        ModeCard(
-            title = "Флеш-карточки",
-            description = "Повторяйте термины и проверяйте себя в классическом режиме",
-            iconRes = R.drawable.ic_back, // Замените на иконку карточек (например, слои или блокнот)
-            onClick = { onNavigate(Screen.FlipCards) }
-        )
+            LazyColumn(
+                state = cardsInfoState,
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxWidth(),
+            ) {
+                item {
+                    Text(
+                        text = "В этом модуле карточек: ${currentModule.cards.size}",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(bottom = 12.dp, top = 12.dp)
+                    )
 
-        ModeCard(
-            title = "Тест",
-            description = "Выбирайте правильное значение из нескольких вариантов",
-            iconRes = R.drawable.ic_back, // Замените на иконку теста (например, галочка с пунктами)
-            onClick = { onNavigate(Screen.Quiz) }
-        )
+                    Text(
+                        text = "Режимы обучения",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 8.dp)
+                    )
 
-        ModeCard(
-            title = "Мэтчинг",
-            description = "Соединяйте слова и их значения",
-            iconRes = R.drawable.ic_back, // Замените на иконку пазла или стрелочек соединения
-            onClick = { onNavigate(Screen.Match) }
+                    ModeCard(
+                        title = "Флеш-карточки",
+                        description = "Повторяйте термины и проверяйте себя в классическом режиме",
+                        iconRes = R.drawable.ic_back, // Замените на иконку карточек (например, слои или блокнот)
+                        onClick = { onNavigate(Screen.FlipCards) }
+                    )
+
+                    ModeCard(
+                        title = "Тест",
+                        description = "Выбирайте правильное значение из нескольких вариантов",
+                        iconRes = R.drawable.ic_back, // Замените на иконку теста (например, галочка с пунктами)
+                        onClick = { onNavigate(Screen.Quiz) }
+                    )
+
+                    ModeCard(
+                        title = "Мэтчинг",
+                        description = "Соединяйте слова и их значения",
+                        iconRes = R.drawable.ic_back, // Замените на иконку пазла или стрелочек соединения
+                        onClick = { onNavigate(Screen.Match) }
+                    )
+
+                    Text(
+                        text = "Карточки",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 8.dp)
+                    )
+                }
+
+                itemsIndexed(
+                    items = currentModule.cards,
+                    key = { _, card -> card.id }
+                ) { _, card ->
+                    CardInfo(card = card)
+                }
+
+
+            }
+
+        }
+        ButtonScrollDown(
+            state = cardsInfoState,
+            cards = currentModule.cards,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 40.dp)
         )
     }
 }
@@ -124,7 +167,6 @@ fun ModeCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
             .padding(vertical = 6.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(20.dp),
@@ -178,6 +220,49 @@ fun ModeCard(
         }
     }
 }
+
+@Composable
+fun CardInfo(card: FlashCard) {
+    Card (
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp, horizontal = 16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = card.word,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                thickness = 1.dp, // 1.dp смотрится аккуратнее
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)
+            )
+
+            Text(
+                text = card.meaning,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Normal,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
+    }
+}
+
+
 @Composable
 fun CurrentScreenHeader(
     module: Module,
@@ -368,7 +453,7 @@ fun Menu(module: Module, onNavigate: (Screen) -> Unit, onDelete: (Module) -> Uni
             }
         }
     }
-    
+
 }
 
 @Preview(showBackground = true)
@@ -382,8 +467,17 @@ fun CurrentModulePreview() {
             FlashCard(4, "invading", "вторжение")
         )
     }
-    var currentModule = Module("textModule", cards, true)
+    val currentModule = Module("textModule", cards, true)
     MaterialTheme() {
         CurrentModuleScreen(currentModule, onNavigate = {}, onDelete = {}, onExit = {})
     }
 }
+
+@Preview(showBackground = true)
+@Composable
+fun CardInfoPreview() {
+    MaterialTheme() {
+        CardInfo(FlashCard(1, "assess", "оценивать"))
+    }
+}
+

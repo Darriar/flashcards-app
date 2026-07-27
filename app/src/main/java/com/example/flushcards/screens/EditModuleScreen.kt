@@ -1,21 +1,61 @@
 package com.example.flushcards.screens
 
+import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,13 +68,19 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import com.example.flushcards.R
 import com.example.flushcards.api.TranslationService
 import com.example.flushcards.model.FlashCard
 import com.example.flushcards.model.Module
 import com.example.flushcards.ui.theme.FlushCardsTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
+val TAG = "My Tag"
+
+@SuppressLint("FrequentlyChangingValue")
 @Composable
 fun EditModuleScreen(module: Module, onOk: () -> Unit, onExit: () -> Unit) {
     val localCards = remember {
@@ -54,7 +100,10 @@ fun EditModuleScreen(module: Module, onOk: () -> Unit, onExit: () -> Unit) {
         }
     }
 
-    val isReadyEnabled = validCardsCount >= 4 && moduleName.isNotBlank()
+    val isReadyEnabled = validCardsCount >= 4 && moduleName.isNotBlank()    // 4 заменить константой
+
+    val cardsListState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
 
     Box(
         modifier = Modifier
@@ -68,57 +117,72 @@ fun EditModuleScreen(module: Module, onOk: () -> Unit, onExit: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            CreateModuleHeader(onExit)
+            CreateModuleHeader(onExit, localCards, cardsListState)
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            OutlinedTextField(
-                value = moduleName,
-                onValueChange = { moduleName = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
-                textStyle = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.SemiBold),
-                label = { Text("Название модуля") },
-                shape = RoundedCornerShape(16.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
-                )
-            )
 
-            if (validCardsCount < 4) {
-                Surface(
-                    color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp)
-                ) {
-                    Text(
-                        text = "Добавьте еще ${4 - validCardsCount} слов(а), чтобы сохранить модуль",
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
 
             LazyColumn(
+                state = cardsListState,
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                itemsIndexed(localCards) { index, card ->
-                    key(card.id) {
+                item {
+                    OutlinedTextField(
+                        value = moduleName,
+                        onValueChange = { moduleName = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 8.dp),
+                        textStyle = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.SemiBold),
+                        label = { Text("Название модуля") },
+                        shape = RoundedCornerShape(16.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                        )
+                    )
+                }
+
+
+                item {
+                    if (validCardsCount < 4) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp)
+                        ) {
+                            Text(
+                                text = "Добавьте еще ${4 - validCardsCount} слов(а), чтобы сохранить модуль",
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+
+                itemsIndexed(items = localCards,
+                    key = { _, card -> card.id }
+                ) { index, card ->
+
                         CreateCard(
                             card = card,
-                            onWordChange = { newWord -> localCards[index] = card.copy(word = newWord) },
-                            onMeaningChange = { newMeaning -> localCards[index] = card.copy(meaning = newMeaning) }
+                            onWordChange = { newWord ->
+                                localCards[index] = card.copy(word = newWord)
+                            },
+                            onMeaningChange = { newMeaning ->
+                                localCards[index] = card.copy(meaning = newMeaning)
+                            }
                         )
-                    }
+                        Log.d(TAG, "${card.word} hashCode: ${card.hashCode()}")
+
                 }
 
                 item { Spacer(modifier = Modifier.height(100.dp)) }
@@ -129,10 +193,11 @@ fun EditModuleScreen(module: Module, onOk: () -> Unit, onExit: () -> Unit) {
             onClick = {
                 if (isReadyEnabled) {
                     module.cards.clear()
-                    module.cards.addAll(localCards
-                        .filter { it.word.isNotBlank() && it.meaning.isNotBlank() }
-                        .map { it.copy(word = it.word.trim(), meaning = it.meaning.trim()) }
-                        .distinctBy { it.word.lowercase() })
+                    module.cards.addAll(
+                        localCards
+                            .filter { it.word.isNotBlank() && it.meaning.isNotBlank() }
+                            .map { it.copy(word = it.word.trim(), meaning = it.meaning.trim()) }
+                            .distinctBy { it.word.lowercase() })
                     module.name = moduleName
                     onOk()
                 }
@@ -156,10 +221,21 @@ fun EditModuleScreen(module: Module, onOk: () -> Unit, onExit: () -> Unit) {
             )
         }
 
+        ButtonScrollDown(
+            state = cardsListState,
+            cards = localCards,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 160.dp)
+        )
+
         FloatingActionButton(
             onClick = {
                 val newId = if (localCards.isEmpty()) 1 else localCards.maxOf { it.id } + 1
                 localCards.add(FlashCard(newId, "", ""))
+                scope.launch {
+                    cardsListState.animateScrollToItem(localCards.size - 1)
+                }
             },
             containerColor = MaterialTheme.colorScheme.primaryContainer,
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -172,6 +248,56 @@ fun EditModuleScreen(module: Module, onOk: () -> Unit, onExit: () -> Unit) {
             Icon(
                 imageVector = Icons.Default.Add,
                 contentDescription = "Добавить карточку",
+                modifier = Modifier.size(28.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun ButtonScrollDown(state: LazyListState, cards: List<FlashCard>, modifier: Modifier = Modifier) {
+    val scope = rememberCoroutineScope()
+
+    val isLastCardVisible by remember(state, cards.size) {
+        derivedStateOf {
+            if (cards.isEmpty()) return@derivedStateOf false
+
+            val lastCardId = cards.last().id
+
+            val lastCardInfo = state.layoutInfo.visibleItemsInfo.find { it.key == lastCardId }
+            if (lastCardInfo != null) {
+                val cardBottom = lastCardInfo.offset + lastCardInfo.size
+                cardBottom <= state.layoutInfo.viewportEndOffset
+            } else {
+                false
+            }
+        }
+    }
+
+    AnimatedVisibility(
+        visible = !isLastCardVisible,
+        enter = fadeIn(),
+        exit = fadeOut(),
+        modifier = modifier
+            .padding(end = 24.dp)
+            .size(56.dp)
+    ) {
+        FloatingActionButton(
+            onClick = {
+                scope.launch {
+                    if (state.layoutInfo.totalItemsCount > 0) {
+                        state.animateScrollToItem(state.layoutInfo.totalItemsCount - 1)
+                    }
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            shape = CircleShape,
+        ) {
+
+            Icon(
+                imageVector = Icons.Default.ArrowDownward,
+                contentDescription = "Прокрутить вниз",
                 modifier = Modifier.size(28.dp)
             )
         }
@@ -246,7 +372,7 @@ fun CreateCard(card: FlashCard, onWordChange: (String) -> Unit, onMeaningChange:
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_back), // Сюда лучше поставить иконку перевода/магии, если есть
+                        painter = painterResource(id = R.drawable.ic_back), // поставить иконку перевода/магии
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(16.dp)
@@ -282,40 +408,247 @@ fun CreateCard(card: FlashCard, onWordChange: (String) -> Unit, onMeaningChange:
 }
 
 @Composable
-fun CreateModuleHeader(onBack: () -> Unit) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(64.dp),
-        shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 4.dp
-    ) {
-        Row(
+fun CreateModuleHeader(
+    onBack: () -> Unit,
+    cards: MutableList<FlashCard>,
+    cardsListState: LazyListState
+) {
+    var isSearchActive by remember { mutableStateOf(false) }
+
+    Box {
+        Surface(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 20.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .fillMaxWidth()
+                .height(64.dp),
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surface,
+            shadowElevation = 4.dp
         ) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_back),
-                contentDescription = "Back",
+            Row(
                 modifier = Modifier
-                    .size(28.dp)
-                    .clip(CircleShape)
-                    .clickable { onBack() },
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+                    .fillMaxSize()
+                    .padding(horizontal = 20.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_back),
+                    contentDescription = "Back",
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(CircleShape)
+                        .clickable { onBack() },
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
 
-            Text(
-                text = "Редактирование",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+                Text(
+                    text = "Редактирование",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
 
-           Spacer(modifier = Modifier)
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = "Search",
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(CircleShape)
+                        .clickable { isSearchActive = true },
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        if (isSearchActive) {
+            SearchCard(cards, cardsListState, onDismiss = { isSearchActive = false })
+        }
+    }
+}
+
+@Composable
+fun SearchCard(
+    cards: MutableList<FlashCard>,
+    cardsListState: LazyListState,
+    onDismiss: () -> Unit
+) {
+
+    var searchWord by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
+
+    val resultIndexes by remember(searchWord, cards) {
+        derivedStateOf {
+            if (searchWord.isBlank()) emptyList()
+            else cards.mapIndexedNotNull { index, card ->
+                val query = searchWord.trim()
+                if (card.word.contains(query, ignoreCase = true) ||
+                    card.meaning.contains(query, ignoreCase = true)
+                ) index else null
+            }
+        }
+    }
+
+    var currentIndex by remember(resultIndexes) { mutableIntStateOf(0) }
+
+    Popup(
+        alignment = Alignment.TopCenter,
+        onDismissRequest = onDismiss,
+        properties = PopupProperties(
+            focusable = true,
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true
+        )
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            shadowElevation = 8.dp
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    ) {
+                        TextField(
+                            value = searchWord,
+                            onValueChange = { searchWord = it },
+                            placeholder = {
+                                Text(
+                                    text = "Поиск по карточкам...",
+                                    fontSize = 14.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                )
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            },
+                            textStyle = TextStyle(
+                                fontSize = 15.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            ),
+                            singleLine = true,
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                disabledContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent
+                            )
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(6.dp))
+
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Закрыть поиск",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                AnimatedVisibility(
+                    visible = searchWord.isNotBlank(),
+                    enter = fadeIn(),
+                    exit = fadeOut()
+                ) {
+                    Column {
+                        HorizontalDivider(
+                            modifier = Modifier
+                                .padding(horizontal = 8.dp, vertical = 6.dp)
+                                .fillMaxWidth(),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                            thickness = 1.dp
+                        )
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 10.dp, vertical = 2.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            val statusText =
+                                if (resultIndexes.isEmpty()) "Ничего не найдено" else "${currentIndex + 1} из ${resultIndexes.size}"
+
+                            Text(
+                                text = statusText,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (resultIndexes.isEmpty()) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.primary
+                            )
+
+                            Row {
+                                IconButton(
+                                    onClick = {
+                                        if (resultIndexes.isNotEmpty()) {
+                                            currentIndex =
+                                                if (currentIndex > 0) currentIndex - 1 else resultIndexes.size - 1
+                                            scope.launch {
+                                                cardsListState.animateScrollToItem(resultIndexes[currentIndex])
+                                            }
+                                        }
+                                    },
+                                    enabled = resultIndexes.isNotEmpty(),
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowUpward,
+                                        contentDescription = "Предыдущее совпадение",
+                                        tint = if (resultIndexes.isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(
+                                            alpha = 0.3f
+                                        )
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.width(4.dp))
+
+                                IconButton(
+                                    onClick = {
+                                        if (resultIndexes.isNotEmpty()) {
+                                            currentIndex = (currentIndex + 1) % resultIndexes.size
+                                            scope.launch {
+                                                cardsListState.animateScrollToItem(resultIndexes[currentIndex])
+                                            }
+                                        }
+                                    },
+                                    enabled = resultIndexes.isNotEmpty(),
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowDownward,
+                                        contentDescription = "Следующее совпадение",
+                                        tint = if (resultIndexes.isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(
+                                            alpha = 0.3f
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -323,7 +656,7 @@ fun CreateModuleHeader(onBack: () -> Unit) {
 @Preview(showBackground = true)
 @Composable
 fun EditModulePreview() {
-    FlushCardsTheme() {
+    FlushCardsTheme {
         EditModuleScreen(
             module = Module("English", mutableListOf(FlashCard(1, "test", "тестовый")), true),
             onOk = {}, onExit = {}
