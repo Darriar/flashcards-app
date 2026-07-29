@@ -19,7 +19,7 @@ val OutlineVariant = Color(0xFF90A4BB)
 
 //val BackgroundScreen = Color(0xFFF8FAFC)
 val SurfaceCard = Color(0xFFFFFFFF)
-//val OutlineVariant = Color(0xFFE2E8F0)
+//♠val OutlineVariant = Color(0xFFE2E8F0)
 
 val SuccessGreen = Color(0xFF2E7D32)
 val SuccessContainerGreen = Color(0xFFE8F5E9)
