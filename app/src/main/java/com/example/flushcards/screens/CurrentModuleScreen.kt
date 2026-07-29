@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -79,6 +78,8 @@ fun CurrentModuleScreen(
         ) {
             CurrentScreenHeader(currentModule, onNavigate, onDelete, onExit)
 
+            Spacer(modifier = Modifier.height(10.dp))
+
             LazyColumn(
                 state = cardsInfoState,
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -86,14 +87,6 @@ fun CurrentModuleScreen(
                     .fillMaxWidth(),
             ) {
                 item {
-                    Text(
-                        text = "В этом модуле карточек: ${currentModule.cards.size}",
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(bottom = 12.dp, top = 12.dp)
-                    )
-
                     Text(
                         text = "Режимы обучения",
                         fontSize = 18.sp,
@@ -125,6 +118,8 @@ fun CurrentModuleScreen(
                         onClick = { onNavigate(Screen.Match) }
                     )
 
+                    Spacer(modifier = Modifier.height(10.dp))
+
                     Text(
                         text = "Карточки",
                         fontSize = 18.sp,
@@ -132,7 +127,18 @@ fun CurrentModuleScreen(
                         color = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 8.dp, vertical = 8.dp)
+                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                    )
+
+                    Text(
+                        text = "В этом модуле карточек: ${currentModule.cards.size}",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+
                     )
                 }
 
@@ -226,7 +232,7 @@ fun CardInfo(card: FlashCard) {
     Card (
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 10.dp, vertical = 6.dp),
+            .padding(vertical = 6.dp),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
     ) {
@@ -339,6 +345,15 @@ fun Menu(module: Module, onNavigate: (Screen) -> Unit, onDelete: (Module) -> Uni
                 shape = RoundedCornerShape(16.dp)
             ) {
                 DropdownMenuItem(
+                    text = { Text("Редактировать", fontWeight = FontWeight.Medium) },
+                    leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                    onClick = {
+                        menuExpanded = false
+                        onNavigate(Screen.EditModule)
+                    }
+                )
+
+                DropdownMenuItem(
                     text = {
                         Text(
                             "Повторить все сначала",
@@ -427,15 +442,6 @@ fun Menu(module: Module, onNavigate: (Screen) -> Unit, onDelete: (Module) -> Uni
                         )
                     }
                 }
-
-                DropdownMenuItem(
-                    text = { Text("Редактировать", fontWeight = FontWeight.Medium) },
-                    leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
-                    onClick = {
-                        menuExpanded = false
-                        onNavigate(Screen.EditModule)
-                    }
-                )
 
                 DropdownMenuItem(
                     text = { Text("Удалить", fontWeight = FontWeight.Medium) },

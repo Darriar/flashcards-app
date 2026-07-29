@@ -1,18 +1,22 @@
 package com.example.flushcards.screens
 
 import android.annotation.SuppressLint
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,6 +34,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -59,8 +64,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -68,6 +75,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.util.fastCoerceIn
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import com.example.flushcards.R
@@ -78,7 +86,6 @@ import com.example.flushcards.ui.theme.FlushCardsTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-val TAG = "My Tag"
 
 @SuppressLint("FrequentlyChangingValue")
 @Composable
@@ -168,20 +175,23 @@ fun EditModuleScreen(module: Module, onOk: () -> Unit, onExit: () -> Unit) {
                     }
                 }
 
-                itemsIndexed(items = localCards,
+                itemsIndexed(
+                    items = localCards,
                     key = { _, card -> card.id }
                 ) { index, card ->
 
-                        CreateCard(
-                            card = card,
-                            onWordChange = { newWord ->
-                                localCards[index] = card.copy(word = newWord)
-                            },
-                            onMeaningChange = { newMeaning ->
-                                localCards[index] = card.copy(meaning = newMeaning)
-                            }
-                        )
-                        Log.d(TAG, "${card.word} hashCode: ${card.hashCode()}")
+                    CreateCard(
+                        card = card,
+                        onWordChange = { newWord ->
+                            localCards[index] = card.copy(word = newWord)
+                        },
+                        onMeaningChange = { newMeaning ->
+                            localCards[index] = card.copy(meaning = newMeaning)
+                        },
+                        onDeleteCard = {
+                            localCards.remove(card)
+                        }
+                    )
 
                 }
 
@@ -305,9 +315,20 @@ fun ButtonScrollDown(state: LazyListState, cards: List<FlashCard>, modifier: Mod
 }
 
 @Composable
-fun CreateCard(card: FlashCard, onWordChange: (String) -> Unit, onMeaningChange: (String) -> Unit) {
+fun CreateCard(
+    card: FlashCard,
+    onWordChange: (String) -> Unit,
+    onMeaningChange: (String) -> Unit,
+    onDeleteCard: () -> Unit
+) {
     var suggestedTranslation by remember { mutableStateOf("") }
     var isTextFieldFocused by remember { mutableStateOf(false) }
+
+    val dragProgress = remember { Animatable(0f) }
+    val minCardWeight = 0.75f
+    val maxDeleteWeight = 1f - minCardWeight
+    val scope = rememberCoroutineScope()
+
 
     LaunchedEffect(card.word) {
         val word = card.word
@@ -321,91 +342,152 @@ fun CreateCard(card: FlashCard, onWordChange: (String) -> Unit, onMeaningChange:
         }
     }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        )
+    Row(
+        modifier = Modifier
+            .height(intrinsicSize = IntrinsicSize.Min)
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp)),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            TextField(
-                value = card.word,
-                onValueChange = onWordChange,
-                label = { Text("Термин", fontSize = 11.sp, fontWeight = FontWeight.Medium) },
-                textStyle = TextStyle(fontSize = 16.sp),
-                modifier = Modifier.fillMaxWidth(),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
-                )
-            )
-
-            HorizontalDivider(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 4.dp),
-                color = MaterialTheme.colorScheme.outlineVariant,
-                thickness = 1.dp
-            )
-
-            AnimatedVisibility(
-                visible = suggestedTranslation.isNotBlank() && isTextFieldFocused,
-                enter = fadeIn(),
-                exit = fadeOut()
-            ) {
-                Row(
-                    modifier = Modifier
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                        .background(
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                            shape = RoundedCornerShape(10.dp)
-                        )
-                        .clickable {
-                            onMeaningChange(suggestedTranslation)
-                            suggestedTranslation = ""
+        Card(
+            modifier = Modifier
+                .fillMaxHeight()
+                .fillMaxWidth()
+                .weight(((1f - dragProgress.value)).coerceAtLeast(minCardWeight))
+                .clipToBounds()
+                .pointerInput(Unit) {
+                    detectHorizontalDragGestures(
+                        onDragEnd = {
+                            scope.launch {
+                                val target =
+                                    if (dragProgress.value > maxDeleteWeight / 2) 1f else 0f
+                                dragProgress.animateTo(
+                                    targetValue = target,
+                                    animationSpec = tween(durationMillis = 200)
+                                )
+                            }
+                        },
+                        onHorizontalDrag = { change, dragAmount ->
+                            change.consume()
+                            val newProgress = (dragProgress.value - dragAmount / 500f).coerceIn(
+                                0f,
+                                maxDeleteWeight
+                            )
+                            scope.launch {
+                                dragProgress.snapTo(newProgress)
+                            }
                         }
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    )
+                },
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            )
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                TextField(
+                    value = card.word,
+                    onValueChange = onWordChange,
+                    label = { Text("Термин", fontSize = 11.sp, fontWeight = FontWeight.Medium) },
+                    textStyle = TextStyle(fontSize = 16.sp),
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        disabledContainerColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent
+                    )
+                )
+
+                HorizontalDivider(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 4.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                    thickness = 1.dp
+                )
+
+                AnimatedVisibility(
+                    visible = suggestedTranslation.isNotBlank() && isTextFieldFocused,
+                    enter = fadeIn(),
+                    exit = fadeOut()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                shape = RoundedCornerShape(10.dp)
+                            )
+                            .clickable {
+                                onMeaningChange(suggestedTranslation)
+                                suggestedTranslation = ""
+                            }
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_back), // поставить иконку перевода/магии
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Перевод: $suggestedTranslation",
+                            color = MaterialTheme.colorScheme.primary,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+
+                TextField(
+                    value = card.meaning,
+                    onValueChange = onMeaningChange,
+                    label = { Text("Значение", fontSize = 11.sp, fontWeight = FontWeight.Medium) },
+                    textStyle = TextStyle(fontSize = 16.sp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onFocusChanged { isTextFieldFocused = it.isFocused },
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        disabledContainerColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent
+                    )
+                )
+            }
+        }
+
+        if (dragProgress.value > 0.001f) {
+            Card(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth()
+                    .weight(dragProgress.value.fastCoerceIn(0.0001f, maxDeleteWeight))
+                    .clipToBounds(),
+                colors = CardDefaults.cardColors(MaterialTheme.colorScheme.errorContainer),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clickable(onClick = { onDeleteCard() }),
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_back), // поставить иконку перевода/магии
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "Перевод: $suggestedTranslation",
-                        color = MaterialTheme.colorScheme.primary,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Удалить",
+                        tint = MaterialTheme.colorScheme.error
                     )
                 }
             }
-
-            TextField(
-                value = card.meaning,
-                onValueChange = onMeaningChange,
-                label = { Text("Значение", fontSize = 11.sp, fontWeight = FontWeight.Medium) },
-                textStyle = TextStyle(fontSize = 16.sp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onFocusChanged { isTextFieldFocused = it.isFocused },
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
-                )
-            )
         }
     }
 }
+
 
 @Composable
 fun CreateModuleHeader(
