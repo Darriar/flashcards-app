@@ -83,6 +83,7 @@ import com.example.flushcards.R
 import com.example.flushcards.api.TranslationService
 import com.example.flushcards.model.FlashCard
 import com.example.flushcards.model.Module
+import com.example.flushcards.model.ModuleConfig
 import com.example.flushcards.ui.theme.FlushCardsTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -91,10 +92,11 @@ import kotlinx.coroutines.launch
 @SuppressLint("FrequentlyChangingValue")
 @Composable
 fun EditModuleScreen(module: Module, onOk: (localModule: Module) -> Unit, onExit: (localModule: Module) -> Unit) {
+
     var localModule by remember {
         val initialCards = buildList {
             if (module.cards.isEmpty()) {
-                repeat(4) { index ->
+                repeat(ModuleConfig.MIN_CARDS_COUNT) { index ->
                     add(FlashCard(id = index + 1, word = "", meaning = ""))
                 }
             } else {
@@ -112,7 +114,7 @@ fun EditModuleScreen(module: Module, onOk: (localModule: Module) -> Unit, onExit
     }
 
     val isReadyEnabled =
-        validCardsCount >= 4 && localModule.name.isNotBlank()    // 4 заменить константой
+        validCardsCount >= ModuleConfig.MIN_CARDS_COUNT && localModule.name.isNotBlank()
 
     val cardsListState = rememberLazyListState()
     val scope = rememberCoroutineScope()
@@ -142,24 +144,12 @@ fun EditModuleScreen(module: Module, onOk: (localModule: Module) -> Unit, onExit
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 item {
-                    var tempName by remember { mutableStateOf(module.name) }
-                    var wasFocused by remember { mutableStateOf(false) }
                     OutlinedTextField(
-                        value = tempName,
-                        onValueChange = { newName ->
-                            tempName = newName
-                        },
+                        value = localModule.name,
+                        onValueChange = { localModule = localModule.copy(name = it) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 8.dp, vertical = 8.dp)
-                            .onFocusChanged { focusState ->
-                                if (focusState.isFocused) {
-                                    wasFocused = true
-                                } else if (wasFocused) {
-                                    localModule = localModule.copy(name = tempName)
-                                    wasFocused = false
-                                }
-                            },
+                            .padding(horizontal = 8.dp, vertical = 8.dp),
                         textStyle = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.SemiBold),
                         label = { Text("Название модуля") },
                         shape = RoundedCornerShape(16.dp),
@@ -172,7 +162,7 @@ fun EditModuleScreen(module: Module, onOk: (localModule: Module) -> Unit, onExit
 
 
                 item {
-                    if (validCardsCount < 4) {
+                    if (validCardsCount < ModuleConfig.MIN_CARDS_COUNT) {
                         Surface(
                             color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f),
                             shape = RoundedCornerShape(12.dp),
@@ -181,7 +171,7 @@ fun EditModuleScreen(module: Module, onOk: (localModule: Module) -> Unit, onExit
                                 .padding(8.dp)
                         ) {
                             Text(
-                                text = "Добавьте еще ${4 - validCardsCount} слов(а), чтобы сохранить модуль",
+                                text = "Добавьте еще ${ModuleConfig.MIN_CARDS_COUNT - validCardsCount} слов(а), чтобы сохранить модуль",
                                 color = MaterialTheme.colorScheme.onErrorContainer,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium,

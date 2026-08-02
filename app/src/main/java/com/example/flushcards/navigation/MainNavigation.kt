@@ -16,6 +16,7 @@ import com.example.flushcards.data.ModuleStorageService
 import com.example.flushcards.data.ModuleStorageService.deleteModule
 import com.example.flushcards.model.FlashCard
 import com.example.flushcards.model.Module
+import com.example.flushcards.model.ModuleConfig
 import com.example.flushcards.model.Screen
 import com.example.flushcards.screens.CurrentModuleScreen
 import com.example.flushcards.screens.EditModuleScreen
@@ -32,7 +33,7 @@ import kotlinx.serialization.json.Json
 @Composable
 fun FlipCardsNavigation() {
 
-    var currentScreen by remember { mutableStateOf(Screen.EditModule) }//.MyModules)}
+    var currentScreen by remember { mutableStateOf(Screen.MyModules) }
     val cards = remember {
         mutableStateListOf(
             FlashCard(1, "assess", "оценивать"),
@@ -107,6 +108,8 @@ fun FlipCardsNavigation() {
         Screen.EditModule -> {
             var showExitDialog by remember { mutableStateOf(false) }
             var showOkDialog by remember { mutableStateOf(false) }
+            var showSameNameDialog by remember { mutableStateOf(false) }
+            var showNotEnoughCards by remember { mutableStateOf(false) }
             var finalModule by remember { mutableStateOf(Module("", mutableListOf<FlashCard>())) }
 
             val onExit = {
@@ -119,16 +122,23 @@ fun FlipCardsNavigation() {
             }
 
             val onOk = {
-                currentModule = finalModule.copy()
-                scope.launch {
-                    val jsonContent = Json.encodeToString(currentModule)
-                    val isSucceed = ModuleStorageService.saveModule(
-                        context,
-                        currentModule.name,
-                        jsonContent
-                    )
+                if (finalModule.cards.size < ModuleConfig.MIN_CARDS_COUNT) {
+                    showNotEnoughCards = true
+                } else {
+                    currentModule = finalModule.copy()
+                        if (!modules.contains(currentModule))
+                            modules.add(currentModule)
+
+                    scope.launch {
+                        val jsonContent = Json.encodeToString(currentModule)
+                        val isSucceed = ModuleStorageService.saveModule(
+                            context,
+                            currentModule.name,
+                            jsonContent
+                        )
+                    }
+                    currentScreen = Screen.CurrentModule
                 }
-                currentScreen = Screen.CurrentModule
             }
 
             EditModuleScreen(
@@ -141,11 +151,16 @@ fun FlipCardsNavigation() {
                             .distinctBy { it.word.lowercase() }.toMutableList()
                     )
 
-                    if (finalModule.cards.size == localModule.cards.size) {
-                        onOk()
-                    } else {
-                        showOkDialog = true
+                    if (modules.any {(it.name == finalModule.name) && (it != finalModule)}) {
+                        showSameNameDialog = true
+                    } else
+                        if (finalModule.cards.size == localModule.cards.size) {
+                            onOk()
+                        } else {
+                            showOkDialog = true
                     }
+
+
                 },
                 onExit = { localModule ->
                     localModule.trim()
@@ -172,6 +187,7 @@ fun FlipCardsNavigation() {
 
 
             }
+
             if (showOkDialog) {
                 Dialog(onDismissRequest = { showOkDialog = false }) {
                     NotificationCard(
@@ -183,6 +199,30 @@ fun FlipCardsNavigation() {
                             showOkDialog = false
                         },
                         onDisagree = { showOkDialog = false }
+                    )
+                }
+            }
+
+            if (showSameNameDialog) {
+                Dialog(onDismissRequest = { showSameNameDialog = false }) {
+                    NotificationCard(
+                        title = "Модуль с таким названием уже существует. Переименуйте модуль",
+                        agreeText = "Хорошо",
+                        disagreeText = null,
+                        onAgree = { showSameNameDialog = false },
+                        onDisagree = {  }
+                    )
+                }
+            }
+
+            if (showNotEnoughCards) {
+                Dialog(onDismissRequest = { showNotEnoughCards = false }) {
+                    NotificationCard(
+                        title = "Недостаточно карточек, добавьте еще ${ModuleConfig.MIN_CARDS_COUNT - finalModule.cards.size}",
+                        agreeText = "Хорошо",
+                        disagreeText = null,
+                        onAgree = {  showNotEnoughCards = false },
+                        onDisagree = {  }
                     )
                 }
             }

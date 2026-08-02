@@ -129,7 +129,7 @@ fun MyModulesScreen(
         Button(
             onClick = {
                 val newModule = Module("Новый модуль", mutableListOf())
-                modules.add(newModule)
+                //modules.add(newModule)
                 onAddModule(newModule)
             },
             modifier = Modifier

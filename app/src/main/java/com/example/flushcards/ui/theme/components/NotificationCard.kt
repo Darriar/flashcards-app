@@ -38,7 +38,7 @@ import com.example.flushcards.ui.theme.FlushCardsTheme
 fun NotificationCard(
     title: String,
     agreeText: String,
-    disagreeText: String,
+    disagreeText: String?,
     onAgree: () -> Unit,
     onDisagree: () -> Unit,
     modifier: Modifier = Modifier
@@ -81,25 +81,27 @@ fun NotificationCard(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    OutlinedButton(
-                        onClick = {
-                            onDisagree()
-                            isVisible = false
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight(),
-                        shape = MaterialTheme.shapes.medium
-                    ) {
-                        Text(
-                            text = disagreeText,
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 14.sp,
-                            lineHeight = 16.sp,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                    if (disagreeText != null) {
+                        OutlinedButton(
+                            onClick = {
+                                onDisagree()
+                                isVisible = false
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight(),
+                            shape = MaterialTheme.shapes.medium
+                        ) {
+                            Text(
+                                text = disagreeText,
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 14.sp,
+                                lineHeight = 16.sp,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
 
                     Button(
