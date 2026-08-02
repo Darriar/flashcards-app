@@ -39,8 +39,6 @@ import com.example.flushcards.model.Module
 import com.example.flushcards.ui.theme.FlushCardsTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.inc
-import kotlin.text.compareTo
 
 @Composable
 fun QuizScreen(module: Module, onExit: () -> Unit) {

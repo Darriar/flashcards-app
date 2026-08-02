@@ -11,7 +11,6 @@ data class FlashCard (
     var roundsUntilReview: Int = 0,
     var isFirstTry: Boolean = true
 ) {
-
     fun resetFirstTry() {
         isFirstTry = true
     }
@@ -27,4 +26,5 @@ data class FlashCard (
         progress = 0
         roundsUntilReview = 0
     }
+
 }

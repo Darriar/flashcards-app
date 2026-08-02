@@ -56,11 +56,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -89,25 +89,29 @@ import kotlinx.coroutines.launch
 
 @SuppressLint("FrequentlyChangingValue")
 @Composable
-fun EditModuleScreen(module: Module, onOk: () -> Unit, onExit: () -> Unit) {
-    val localCards = remember {
-        mutableStateListOf<FlashCard>().apply {
+fun EditModuleScreen(module: Module, onOk: (localModule: Module) -> Unit, onExit: (localModule: Module) -> Unit) {
+    var localModule by remember {
+        val initialCards = buildList {
             if (module.cards.isEmpty()) {
-                repeat(4) { index -> add(FlashCard(index + 1, "", "")) }
+                repeat(4) { index ->
+                    add(FlashCard(id = index + 1, word = "", meaning = ""))
+                }
             } else {
-                addAll(module.cards)
+                addAll(module.cards.map { it.copy() })
             }
         }
+
+        mutableStateOf(module.copy(cards = initialCards.toMutableStateList()))
     }
-    var moduleName by remember { mutableStateOf(module.name) }
 
     val validCardsCount by remember {
         derivedStateOf {
-            localCards.count { it.word.isNotBlank() && it.meaning.isNotBlank() }
+            localModule.cards.count { it.word.isNotBlank() && it.meaning.isNotBlank() }
         }
     }
 
-    val isReadyEnabled = validCardsCount >= 4 && moduleName.isNotBlank()    // 4 заменить константой
+    val isReadyEnabled =
+        validCardsCount >= 4 && localModule.name.isNotBlank()    // 4 заменить константой
 
     val cardsListState = rememberLazyListState()
     val scope = rememberCoroutineScope()
@@ -124,11 +128,9 @@ fun EditModuleScreen(module: Module, onOk: () -> Unit, onExit: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            CreateModuleHeader(onExit, localCards, cardsListState)
+            CreateModuleHeader(onExit, localModule, cardsListState)
 
             Spacer(modifier = Modifier.height(8.dp))
-
-
 
             LazyColumn(
                 state = cardsListState,
@@ -137,12 +139,24 @@ fun EditModuleScreen(module: Module, onOk: () -> Unit, onExit: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 item {
+                    var tempName by remember { mutableStateOf(module.name) }
+                    var wasFocused by remember { mutableStateOf(false) }
                     OutlinedTextField(
-                        value = moduleName,
-                        onValueChange = { moduleName = it },
+                        value = tempName,
+                        onValueChange = { newName ->
+                            tempName = newName
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 8.dp, vertical = 8.dp),
+                            .padding(horizontal = 8.dp, vertical = 8.dp)
+                            .onFocusChanged { focusState ->
+                                if (focusState.isFocused) {
+                                    wasFocused = true
+                                } else if (wasFocused) {
+                                    localModule = localModule.copy(name = tempName)
+                                    wasFocused = false
+                                }
+                            },
                         textStyle = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.SemiBold),
                         label = { Text("Название модуля") },
                         shape = RoundedCornerShape(16.dp),
@@ -176,20 +190,21 @@ fun EditModuleScreen(module: Module, onOk: () -> Unit, onExit: () -> Unit) {
                 }
 
                 itemsIndexed(
-                    items = localCards,
+                    items = localModule.cards,
+
                     key = { _, card -> card.id }
                 ) { index, card ->
 
                     CreateCard(
                         card = card,
                         onWordChange = { newWord ->
-                            localCards[index] = card.copy(word = newWord)
+                            localModule.cards[index] = card.copy(word = newWord)
                         },
                         onMeaningChange = { newMeaning ->
-                            localCards[index] = card.copy(meaning = newMeaning)
+                            localModule.cards[index] = card.copy(meaning = newMeaning)
                         },
                         onDeleteCard = {
-                            localCards.remove(card)
+                            localModule.cards.remove(card)
                         }
                     )
 
@@ -202,14 +217,7 @@ fun EditModuleScreen(module: Module, onOk: () -> Unit, onExit: () -> Unit) {
         Button(
             onClick = {
                 if (isReadyEnabled) {
-                    module.cards.clear()
-                    module.cards.addAll(
-                        localCards
-                            .filter { it.word.isNotBlank() && it.meaning.isNotBlank() }
-                            .map { it.copy(word = it.word.trim(), meaning = it.meaning.trim()) }
-                            .distinctBy { it.word.lowercase() })
-                    module.name = moduleName
-                    onOk()
+                    onOk(localModule)
                 }
             },
             enabled = isReadyEnabled,
@@ -233,7 +241,7 @@ fun EditModuleScreen(module: Module, onOk: () -> Unit, onExit: () -> Unit) {
 
         ButtonScrollDown(
             state = cardsListState,
-            cards = localCards,
+            cards = localModule.cards,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(bottom = 160.dp)
@@ -241,10 +249,11 @@ fun EditModuleScreen(module: Module, onOk: () -> Unit, onExit: () -> Unit) {
 
         FloatingActionButton(
             onClick = {
-                val newId = if (localCards.isEmpty()) 1 else localCards.maxOf { it.id } + 1
-                localCards.add(FlashCard(newId, "", ""))
+                val newId =
+                    if (localModule.cards.isEmpty()) 1 else localModule.cards.maxOf { it.id } + 1
+                localModule.cards.add(FlashCard(newId, "", ""))
                 scope.launch {
-                    cardsListState.animateScrollToItem(localCards.size - 1)
+                    cardsListState.animateScrollToItem(localModule.cards.size - 1)
                 }
             },
             containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -387,10 +396,11 @@ fun CreateCard(
             Column(modifier = Modifier.padding(12.dp)) {
                 TextField(
                     value = card.word,
-                    onValueChange = onWordChange,
+                    onValueChange = { newWord -> onWordChange(newWord) },
                     label = { Text("Термин", fontSize = 11.sp, fontWeight = FontWeight.Medium) },
                     textStyle = TextStyle(fontSize = 16.sp),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth(),
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = Color.Transparent,
                         unfocusedContainerColor = Color.Transparent,
@@ -445,12 +455,14 @@ fun CreateCard(
 
                 TextField(
                     value = card.meaning,
-                    onValueChange = onMeaningChange,
+                    onValueChange = { newMeaning -> onMeaningChange(newMeaning) },
                     label = { Text("Значение", fontSize = 11.sp, fontWeight = FontWeight.Medium) },
                     textStyle = TextStyle(fontSize = 16.sp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .onFocusChanged { isTextFieldFocused = it.isFocused },
+                        .onFocusChanged { focusState ->
+                            isTextFieldFocused = focusState.isFocused
+                        },
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = Color.Transparent,
                         unfocusedContainerColor = Color.Transparent,
@@ -491,8 +503,8 @@ fun CreateCard(
 
 @Composable
 fun CreateModuleHeader(
-    onBack: () -> Unit,
-    cards: MutableList<FlashCard>,
+    onBack: (localModule: Module) -> Unit,
+    module: Module,
     cardsListState: LazyListState
 ) {
     var isSearchActive by remember { mutableStateOf(false) }
@@ -519,7 +531,7 @@ fun CreateModuleHeader(
                     modifier = Modifier
                         .size(28.dp)
                         .clip(CircleShape)
-                        .clickable { onBack() },
+                        .clickable { onBack(module) },
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
@@ -543,7 +555,7 @@ fun CreateModuleHeader(
         }
 
         if (isSearchActive) {
-            SearchCard(cards, cardsListState, onDismiss = { isSearchActive = false })
+            SearchCard(module.cards, cardsListState, onDismiss = { isSearchActive = false })
         }
     }
 }

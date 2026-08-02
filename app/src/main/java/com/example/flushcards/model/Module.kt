@@ -18,7 +18,6 @@ data class Module(
     var cards: MutableList<FlashCard>,
     var isTermFirst: Boolean = true
 ) {
-
     fun getCardsToLearn(): MutableList<FlashCard> {
         cards.forEach { it.resetFirstTry()}
 
@@ -48,12 +47,39 @@ data class Module(
         }
     }
 
+    fun trim() {
+        name =name.trim()
+         cards.forEach { card->
+             card.word = card.word.trim()
+             card.meaning = card.meaning.trim()
+        }
+    }
     fun showTermFirst() {
         isTermFirst = true
     }
 
     fun showMeaningFirst() {
         isTermFirst = false
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Module
+
+        if (isTermFirst != other.isTermFirst) return false
+        if (name != other.name) return false
+        if (cards.toList() != other.cards.toList()) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = isTermFirst.hashCode()
+        result = 31 * result + name.hashCode()
+        result = 31 * result + cards.hashCode()
+        return result
     }
 
 }
