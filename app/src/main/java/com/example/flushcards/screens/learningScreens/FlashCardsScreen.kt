@@ -1,5 +1,6 @@
 package com.example.flushcards.screens.learningScreens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -90,6 +91,8 @@ fun FlashCardsScreen(module: Module, onExit: () -> Unit) {
         )
         return
     }
+
+    BackHandler { onExit() }
 
     val currentCard = cardsToLearn[currentIndex]
 

@@ -1,5 +1,6 @@
 package com.example.flushcards.screens.learningScreens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -36,6 +37,8 @@ fun LearningResultScreen(
     onRetry: () -> Unit = {},
     onExit: () -> Unit = {},
 ) {
+    BackHandler { onExit() }
+
     Column(
         modifier = Modifier
             .fillMaxSize()

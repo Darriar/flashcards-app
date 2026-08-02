@@ -1,5 +1,6 @@
 package com.example.flushcards.screens.learningScreens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -79,6 +80,8 @@ fun MatchScreen(module: Module, onExit: () -> Unit) {
         )
         return
     }
+
+    BackHandler { onExit() }
 
     Column (
         modifier = Modifier

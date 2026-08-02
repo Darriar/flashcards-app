@@ -1,6 +1,7 @@
 package com.example.flushcards.screens
 
 import android.annotation.SuppressLint
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -115,6 +116,8 @@ fun EditModuleScreen(module: Module, onOk: (localModule: Module) -> Unit, onExit
 
     val cardsListState = rememberLazyListState()
     val scope = rememberCoroutineScope()
+
+    BackHandler { onExit(localModule) }
 
     Box(
         modifier = Modifier
