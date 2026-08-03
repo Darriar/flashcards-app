@@ -128,8 +128,8 @@ fun MyModulesScreen(
 
         Button(
             onClick = {
-                val newModule = Module("Новый модуль", mutableListOf())
-                //modules.add(newModule)
+                val id = if (modules.isEmpty()) 1 else modules.maxOf { it.id } + 1
+                val newModule = Module(id,"Новый модуль", mutableListOf())
                 onAddModule(newModule)
             },
             modifier = Modifier
@@ -173,7 +173,7 @@ fun MyCardsPreview() {
     }
     FlushCardsTheme {
         MyModulesScreen(
-            modules = remember { mutableStateListOf(Module("English Words", cards), Module("Испанский базовый", mutableListOf())) },
+            modules = remember { mutableStateListOf(Module(1,"English Words", cards), Module(1,"Испанский базовый", mutableListOf())) },
             onModuleCLick = {},
             onAddModule = {}
         )

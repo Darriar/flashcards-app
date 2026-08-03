@@ -348,6 +348,7 @@ fun FlashCardsScreenPreview() {
     FlushCardsTheme {
         FlashCardsScreen(
             module = Module(
+                id = 1,
                 name = "Spanish Essentials",
                 cards = mutableListOf(
                     FlashCard(1, "hola", "hello"),

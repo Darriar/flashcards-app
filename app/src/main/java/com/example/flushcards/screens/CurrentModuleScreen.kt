@@ -476,7 +476,7 @@ fun CurrentModulePreview() {
             FlashCard(4, "invading", "вторжение")
         )
     }
-    val currentModule = Module("textModule", cards, true)
+    val currentModule = Module(1,"textModule", cards, true)
     MaterialTheme() {
         CurrentModuleScreen(currentModule, onNavigate = {}, onDelete = {}, onExit = {})
     }

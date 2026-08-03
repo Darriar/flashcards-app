@@ -42,10 +42,10 @@ fun FlipCardsNavigation() {
             FlashCard(4, "invading", "вторжение")
         )
     }
-    val modules = remember { mutableStateListOf(Module("English words", cards)) }
+    val modules = remember { mutableStateListOf(Module(1,"English words", cards)) }
     var currentModule by remember {
         mutableStateOf(
-            if (modules.isNotEmpty()) modules[0] else Module(
+            if (modules.isNotEmpty()) modules[0] else Module(1,
                 "",
                 mutableListOf()
             )
@@ -94,12 +94,12 @@ fun FlipCardsNavigation() {
             onDelete = { module ->
 
                 scope.launch {
-                    val isSucceed = deleteModule(context, module.name)
+                    val isSucceed = deleteModule(context, module.id)
                 }
                 modules.remove(module)
                 if (currentModule == module) {
                     currentModule =
-                        if (modules.isNotEmpty()) modules[0] else Module("", mutableListOf())
+                        if (modules.isNotEmpty()) modules[0] else Module(1,"", mutableListOf())
                 }
                 currentScreen = Screen.MyModules
             },
@@ -110,7 +110,7 @@ fun FlipCardsNavigation() {
             var showOkDialog by remember { mutableStateOf(false) }
             var showSameNameDialog by remember { mutableStateOf(false) }
             var showNotEnoughCards by remember { mutableStateOf(false) }
-            var finalModule by remember { mutableStateOf(Module("", mutableListOf<FlashCard>())) }
+            var finalModule by remember { mutableStateOf(Module(0,"", mutableListOf<FlashCard>())) }
 
             val onExit = {
                 if (currentModule.cards.isEmpty()) {
@@ -126,18 +126,24 @@ fun FlipCardsNavigation() {
                     showNotEnoughCards = true
                 } else {
                     currentModule = finalModule.copy()
-                        if (!modules.contains(currentModule))
-                            modules.add(currentModule)
+
+                    val index = modules.indexOfFirst{it.id == currentModule.id}
+                    if (index == -1) {
+                        modules.add(currentModule)
+                    } else {
+                        modules[index] = currentModule
+                    }
 
                     scope.launch {
                         val jsonContent = Json.encodeToString(currentModule)
                         val isSucceed = ModuleStorageService.saveModule(
                             context,
-                            currentModule.name,
+                            currentModule.id,
                             jsonContent
                         )
                     }
                     currentScreen = Screen.CurrentModule
+
                 }
             }
 
@@ -151,12 +157,15 @@ fun FlipCardsNavigation() {
                             .distinctBy { it.word.lowercase() }.toMutableList()
                     )
 
-                    if (modules.any {(it.name == finalModule.name) && (it != finalModule)}) {
+                    if (modules.any {(it.name == finalModule.name) && (it != currentModule)}) {
                         showSameNameDialog = true
                     } else
                         if (finalModule.cards.size == localModule.cards.size) {
                             onOk()
                         } else {
+                            localModule.cards.clear()
+                            localModule.cards.addAll(finalModule.cards)
+
                             showOkDialog = true
                     }
 
@@ -172,7 +181,7 @@ fun FlipCardsNavigation() {
                 })
 
             if (showExitDialog) {
-                Dialog(onDismissRequest = { showExitDialog = false }) {
+                Dialog(onDismissRequest = {}) {
                     NotificationCard(
                         title = "У вас есть несохраненные изменения. Вы уверены, что хотите выйти?",
                         agreeText = "Выйти без сохранения",
@@ -189,7 +198,7 @@ fun FlipCardsNavigation() {
             }
 
             if (showOkDialog) {
-                Dialog(onDismissRequest = { showOkDialog = false }) {
+                Dialog(onDismissRequest = {}) {
                     NotificationCard(
                         title = "При сохранении карточки с пустыми полями или с одинаковыми терминами будут удалены, вы уверены?",
                         agreeText = "Сохранить изменения",
@@ -204,7 +213,7 @@ fun FlipCardsNavigation() {
             }
 
             if (showSameNameDialog) {
-                Dialog(onDismissRequest = { showSameNameDialog = false }) {
+                Dialog(onDismissRequest = {}) {
                     NotificationCard(
                         title = "Модуль с таким названием уже существует. Переименуйте модуль",
                         agreeText = "Хорошо",
@@ -216,7 +225,7 @@ fun FlipCardsNavigation() {
             }
 
             if (showNotEnoughCards) {
-                Dialog(onDismissRequest = { showNotEnoughCards = false }) {
+                Dialog(onDismissRequest = {}) {
                     NotificationCard(
                         title = "Недостаточно карточек, добавьте еще ${ModuleConfig.MIN_CARDS_COUNT - finalModule.cards.size}",
                         agreeText = "Хорошо",

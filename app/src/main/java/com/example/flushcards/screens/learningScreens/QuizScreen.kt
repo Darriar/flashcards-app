@@ -245,7 +245,7 @@ fun AnswerCard(answer: String, selectedAnswer: String?, currentCard: FlashCard, 
 fun QuizScreenPreview() {
     FlushCardsTheme {
         QuizScreen(
-            Module("testModule", mutableListOf(FlashCard(1, "test", "тестовый"))),
+            Module(1,"testModule", mutableListOf(FlashCard(1, "test", "тестовый"))),
             onExit = {}
         )
     }

@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -139,7 +140,9 @@ fun EditModuleScreen(module: Module, onOk: (localModule: Module) -> Unit, onExit
 
             LazyColumn(
                 state = cardsListState,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .imePadding(),
                 contentPadding = PaddingValues(vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -745,7 +748,7 @@ fun SearchCard(
 fun EditModulePreview() {
     FlushCardsTheme {
         EditModuleScreen(
-            module = Module("English", mutableListOf(FlashCard(1, "test", "тестовый")), true),
+            module = Module(1,"English", mutableListOf(FlashCard(1, "test", "тестовый")), true),
             onOk = {}, onExit = {}
         )
     }

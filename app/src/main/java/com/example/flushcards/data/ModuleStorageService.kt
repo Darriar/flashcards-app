@@ -7,10 +7,10 @@ import java.io.File
 
 object ModuleStorageService {
 
-    suspend fun saveModule(context: Context, moduleName: String, jsonContent: String): Boolean {
+    suspend fun saveModule(context: Context, moduleId: Int, jsonContent: String): Boolean {
         return withContext(Dispatchers.IO) {
             runCatching {
-                val file = File(context.filesDir, "module_${moduleName}.json")
+                val file = File(context.filesDir, "module_${moduleId}.json")
                 file.writeText(jsonContent)
                 true
             }.getOrDefault(false)
@@ -28,10 +28,10 @@ object ModuleStorageService {
         }
     }
 
-    suspend fun deleteModule(context: Context, moduleName: String): Boolean {
+    suspend fun deleteModule(context: Context, moduleId: Int): Boolean {
         return withContext(Dispatchers.IO) {
             runCatching {
-                val file = File(context.filesDir, "module_${moduleName}.json")
+                val file = File(context.filesDir, "module_${moduleId}.json")
                 if (file.exists())
                     file.delete()
                 else

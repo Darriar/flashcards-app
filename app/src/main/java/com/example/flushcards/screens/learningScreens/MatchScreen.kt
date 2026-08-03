@@ -409,7 +409,7 @@ fun MatchScreenPreview() {
         FlashCard(4, "Curious", "Eager to know or learn about something.")
     )
 
-    val module = Module("Match Test", cards)
+    val module = Module(1,"Match Test", cards)
     MaterialTheme() {
         FlushCardsTheme {
             MatchScreen(module = module, onExit = {})

@@ -14,6 +14,7 @@ import kotlinx.serialization.Serializer
 // сделать уникальное имя модуля
 @Serializable
 data class Module(
+    val id: Int,
     var name: String,
     var cards: MutableList<FlashCard>,
     var isTermFirst: Boolean = true
