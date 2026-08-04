@@ -17,6 +17,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -216,14 +217,21 @@ fun AnswerCard(answer: String, selectedAnswer: String?, currentCard: FlashCard, 
 }
 
 @Composable
-fun WordCard(word: String) {
-    Card(
+fun WordCard(
+    word: String,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+    borderColor: Color = MaterialTheme.colorScheme.outline) {
+    OutlinedCard(
+        border = BorderStroke(
+            width = 2.dp,
+            color = borderColor
+        ),
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            containerColor = containerColor,
         )
     ) {
         Box(
@@ -242,6 +250,8 @@ fun WordCard(word: String) {
         }
     }
 }
+
+
 
 @Preview(showBackground = true)
 @Composable

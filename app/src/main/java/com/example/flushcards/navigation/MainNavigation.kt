@@ -33,7 +33,7 @@ import kotlinx.serialization.json.Json
 @Composable
 fun FlipCardsNavigation() {
 
-    var currentScreen by remember { mutableStateOf(Screen.Write) }
+    var currentScreen by remember { mutableStateOf(Screen.MyModules) }
     val cards = remember {
         mutableStateListOf(
             FlashCard(1, "assess", "оценивать"),
@@ -114,7 +114,9 @@ fun FlipCardsNavigation() {
             var showOkDialog by remember { mutableStateOf(false) }
             var showSameNameDialog by remember { mutableStateOf(false) }
             var showNotEnoughCards by remember { mutableStateOf(false) }
-            var finalModule by remember { mutableStateOf(Module(0,"", mutableListOf<FlashCard>())) }
+
+            var missingCardsCount by remember { mutableStateOf(0) }
+            var tempLocalModule by remember { mutableStateOf<Module?>(null) }
 
             val onExit = {
                 if (currentModule.cards.isEmpty()) {
@@ -125,53 +127,53 @@ fun FlipCardsNavigation() {
                 }
             }
 
-            val onOk = {
-                if (finalModule.cards.size < ModuleConfig.MIN_CARDS_COUNT) {
+            fun processSave(localModule: Module) {
+                val cleanedCards = localModule.cards
+                    .filter { it.word.isNotBlank() && it.meaning.isNotBlank() }
+                    .distinctBy { it.word.lowercase() }
+
+                localModule.cards.clear()
+                localModule.cards.addAll(cleanedCards)
+
+                if (localModule.cards.size < ModuleConfig.MIN_CARDS_COUNT) {
+                    missingCardsCount = ModuleConfig.MIN_CARDS_COUNT - localModule.cards.size
                     showNotEnoughCards = true
-                } else {
-                    currentModule = finalModule.copy()
-
-                    val index = modules.indexOfFirst{it.id == currentModule.id}
-                    if (index == -1) {
-                        modules.add(currentModule)
-                    } else {
-                        modules[index] = currentModule
-                    }
-
-                    scope.launch {
-                        val jsonContent = Json.encodeToString(currentModule)
-                        val isSucceed = ModuleStorageService.saveModule(
-                            context,
-                            currentModule.id,
-                            jsonContent
-                        )
-                    }
-                    currentScreen = Screen.CurrentModule
-
+                    return
                 }
+
+                currentModule = localModule.copy()
+
+                val index = modules.indexOfFirst { it.id == currentModule.id }
+                if (index == -1) modules.add(currentModule) else modules[index] = currentModule
+
+                scope.launch {
+                    val jsonContent = Json.encodeToString(currentModule)
+                    ModuleStorageService.saveModule(context, currentModule.id, jsonContent)
+                }
+
+                currentScreen = Screen.CurrentModule
             }
 
             EditModuleScreen(
                 currentModule,
                 onOk = { localModule ->
                     localModule.trim()
-                    finalModule = localModule.copy(
-                        cards = localModule.cards
-                            .filter { it.word.isNotBlank() && it.meaning.isNotBlank() }
-                            .distinctBy { it.word.lowercase() }.toMutableList()
-                    )
+                    tempLocalModule = localModule
 
-                    if (modules.any {(it.name == finalModule.name) && (it != currentModule)}) {
+                    if (modules.any {(it.name == localModule.name) && (it != currentModule)}) {
                         showSameNameDialog = true
-                    } else
-                        if (finalModule.cards.size == localModule.cards.size) {
-                            onOk()
-                        } else {
-                            localModule.cards.clear()
-                            localModule.cards.addAll(finalModule.cards)
+                    } else {
+                        val hasInvalidCards = localModule.cards.any {
+                            it.word.isBlank() || it.meaning.isBlank() } ||
+                                localModule.cards.distinctBy { it.word.lowercase() }.size != localModule.cards.size
 
+                        if (hasInvalidCards) {
                             showOkDialog = true
+                        } else {
+                            processSave(localModule)
+                        }
                     }
+
 
 
                 },
@@ -208,7 +210,7 @@ fun FlipCardsNavigation() {
                         agreeText = "Сохранить изменения",
                         disagreeText = "Отмена",
                         onAgree = {
-                            onOk()
+                            tempLocalModule?.let { processSave(it) }
                             showOkDialog = false
                         },
                         onDisagree = { showOkDialog = false }
@@ -231,7 +233,7 @@ fun FlipCardsNavigation() {
             if (showNotEnoughCards) {
                 Dialog(onDismissRequest = {}) {
                     NotificationCard(
-                        title = "Недостаточно карточек, добавьте еще ${ModuleConfig.MIN_CARDS_COUNT - finalModule.cards.size}",
+                        title = "Недостаточно карточек, добавьте еще ${missingCardsCount}",
                         agreeText = "Хорошо",
                         disagreeText = null,
                         onAgree = {  showNotEnoughCards = false },

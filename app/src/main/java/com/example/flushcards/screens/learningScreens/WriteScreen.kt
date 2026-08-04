@@ -125,7 +125,6 @@ fun WriteScreen(module: Module, onExit: () -> Unit) {
             isProcessing = true
             scope.launch {
                 showAnswer = true
-                answerState = true
                 delay(1500)
                 currentIndex++
 
@@ -133,24 +132,6 @@ fun WriteScreen(module: Module, onExit: () -> Unit) {
             }
         }
     }
-
-    val borderColor by animateColorAsState(
-        targetValue = when (answerState) {
-            true -> Color(0xFF81C784) // Зеленый
-            false -> MaterialTheme.colorScheme.error // Красный
-            null -> MaterialTheme.colorScheme.outlineVariant
-        },
-        label = "BorderColorAnimation"
-    )
-
-    val containerColor by animateColorAsState(
-        targetValue = when (answerState) {
-            true -> MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f)
-            false -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f)
-            null -> MaterialTheme.colorScheme.surface
-        },
-        label = "ContainerColorAnimation"
-    )
 
     Column(
         modifier = Modifier
@@ -171,7 +152,14 @@ fun WriteScreen(module: Module, onExit: () -> Unit) {
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        WordCard(word = currentCard.word)
+        if (!showAnswer) {
+            WordCard(word = currentCard.word)
+        } else {
+            WordCard(
+                word = currentCard.meaning,
+                containerColor = getContainerColor(showAnswer),
+                borderColor = getBorderColor(showAnswer))
+        }
 
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -187,12 +175,7 @@ fun WriteScreen(module: Module, onExit: () -> Unit) {
         )
 
         OutlinedTextField(
-            value =
-                if (!showAnswer)
-                    guessMeaning
-                else {
-                    currentCard.meaning
-                },
+            value = guessMeaning,
             onValueChange = { if (!isProcessing) guessMeaning = it },
             placeholder = {
                 Text(
@@ -206,10 +189,10 @@ fun WriteScreen(module: Module, onExit: () -> Unit) {
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = containerColor,
-                unfocusedContainerColor = containerColor,
-                focusedBorderColor = borderColor,
-                unfocusedBorderColor = borderColor
+                focusedContainerColor = getContainerColor(answerState),
+                unfocusedContainerColor = getContainerColor(answerState),
+                focusedBorderColor = getBorderColor(answerState),
+                unfocusedBorderColor = getBorderColor(answerState)
             ),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { checkAnswer() })
@@ -268,6 +251,32 @@ fun WriteScreen(module: Module, onExit: () -> Unit) {
             }
         }
     }
+}
+
+@Composable
+fun getBorderColor(state: Boolean?): Color {
+    val borderColor by animateColorAsState(
+        targetValue = when (state) {
+            true -> Color(0xFF81C784)
+            false -> MaterialTheme.colorScheme.error
+            null -> MaterialTheme.colorScheme.outlineVariant
+        },
+        label = "BorderColorAnimation"
+    )
+    return borderColor
+}
+
+@Composable
+fun getContainerColor(state: Boolean?): Color {
+    val containerColor by animateColorAsState(
+        targetValue = when (state) {
+            true -> MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f)
+            false -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f)
+            null -> MaterialTheme.colorScheme.surface
+        },
+        label = "ContainerColorAnimation"
+    )
+    return containerColor
 }
 
 @Preview(showBackground = true)

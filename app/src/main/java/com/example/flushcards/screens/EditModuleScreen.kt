@@ -24,9 +24,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
@@ -55,6 +57,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -92,6 +95,7 @@ import com.example.flushcards.api.TranslationService
 import com.example.flushcards.model.FlashCard
 import com.example.flushcards.model.Module
 import com.example.flushcards.model.ModuleConfig
+import com.example.flushcards.screens.CurrentScreenHeader
 import com.example.flushcards.ui.theme.FlushCardsTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -132,28 +136,54 @@ fun EditModuleScreen(module: Module, onOk: (localModule: Module) -> Unit, onExit
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Vertical).union(WindowInsets.ime))
+
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp)
-                .padding(top = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-
-            CreateModuleHeader(onExit, localModule, cardsListState)
-
-            Spacer(modifier = Modifier.height(8.dp))
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding()
+                        .padding(start = 16.dp, end = 16.dp, top = 8.dp)
+                ) {
+                    CreateModuleHeader(onExit, localModule, cardsListState)
+                }
+            },
+            bottomBar = {
+                Button(
+                    onClick = {
+                        if (isReadyEnabled) {
+                            onOk(localModule)
+                        }
+                    },
+                    enabled = isReadyEnabled,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        disabledContainerColor = MaterialTheme.colorScheme.outlineVariant
+                    ),
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 20.dp)
+                        .height(56.dp),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Text(
+                        text = "Готово",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        ) { innerPadding ->
 
             LazyColumn(
                 state = cardsListState,
+                contentPadding = innerPadding,
                 modifier = Modifier
-                    .weight(1f),
-                contentPadding = PaddingValues(
-                    top = 8.dp,
-                    bottom = 120.dp
-                ),
+                    .padding(start = 16.dp, end = 16.dp, top = 8.dp)
+                    .imePadding(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 item {
@@ -162,7 +192,7 @@ fun EditModuleScreen(module: Module, onOk: (localModule: Module) -> Unit, onExit
                         onValueChange = { localModule = localModule.copy(name = it) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 8.dp, vertical = 8.dp),
+                            .padding(horizontal = 8.dp),
                         textStyle = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.SemiBold),
                         label = { Text("Название модуля") },
                         shape = RoundedCornerShape(16.dp),
@@ -215,35 +245,13 @@ fun EditModuleScreen(module: Module, onOk: (localModule: Module) -> Unit, onExit
                     )
 
                 }
+
             }
         }
 
 
 
-        Button(
-            onClick = {
-                if (isReadyEnabled) {
-                    onOk(localModule)
-                }
-            },
-            enabled = isReadyEnabled,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                disabledContainerColor = MaterialTheme.colorScheme.outlineVariant
-            ),
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 20.dp)
-                .height(56.dp),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Text(
-                text = "Готово",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
+
 
         ButtonScrollDown(
             state = cardsListState,
