@@ -22,13 +22,13 @@ data class Module(
     fun getCardsToLearn(): MutableList<FlashCard> {
         cards.forEach { it.resetFirstTry()}
 
-        var newCards = cards.filter { it.roundsUntilReview <= 0 }.toMutableList()
+        val newCards = cards.filter { it.roundsUntilReview <= 0 }.shuffled()
         if (!isTermFirst) {
             newCards.forEach { card ->
                 card.word = card.meaning.also { card.meaning = card.word }
             }
         }
-        return newCards.ifEmpty { cards }
+        return newCards.ifEmpty { cards }.toMutableList()
     }
 
     fun finishLearning(cardsToLearn: List<FlashCard>, wrongAnswers: Int) {

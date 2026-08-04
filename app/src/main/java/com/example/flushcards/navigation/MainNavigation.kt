@@ -24,6 +24,7 @@ import com.example.flushcards.screens.MyModulesScreen
 import com.example.flushcards.screens.learningScreens.FlashCardsScreen
 import com.example.flushcards.screens.learningScreens.MatchScreen
 import com.example.flushcards.screens.learningScreens.QuizScreen
+import com.example.flushcards.screens.learningScreens.WriteScreen
 import com.example.flushcards.ui.theme.FlushCardsTheme
 import com.example.flushcards.ui.theme.components.NotificationCard
 import kotlinx.coroutines.launch
@@ -86,6 +87,10 @@ fun FlipCardsNavigation() {
 
         Screen.Match -> {
             MatchScreen(currentModule) { currentScreen = Screen.CurrentModule }
+        }
+
+        Screen.Write -> {
+            WriteScreen(currentModule) { currentScreen = Screen.CurrentModule }
         }
 
         Screen.CurrentModule -> CurrentModuleScreen(

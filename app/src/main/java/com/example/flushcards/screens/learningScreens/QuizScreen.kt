@@ -54,9 +54,7 @@ fun QuizScreen(module: Module, onExit: () -> Unit) {
     var rightAnswers by remember { mutableIntStateOf(0) }
     var wrongAnswers by remember { mutableIntStateOf(0) }
 
-    val cardsToLearn = remember(module, sessionTrigger) {
-        module.getCardsToLearn().shuffled()
-    }
+    val cardsToLearn = remember(module, sessionTrigger) { module.getCardsToLearn() }
 
     if (isFinished) {
         module.finishLearning(cardsToLearn, wrongAnswers)
@@ -106,30 +104,7 @@ fun QuizScreen(module: Module, onExit: () -> Unit) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            )
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 40.dp, horizontal = 24.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = currentCard.word,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
+        WordCard(currentCard.word)
 
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -235,6 +210,34 @@ fun AnswerCard(answer: String, selectedAnswer: String?, currentCard: FlashCard, 
                 overflow = TextOverflow.Ellipsis,
                 lineHeight = 20.sp,
                 modifier = Modifier.padding(horizontal = 8.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun WordCard(word: String) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 40.dp, horizontal = 24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = word,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
             )
         }
     }

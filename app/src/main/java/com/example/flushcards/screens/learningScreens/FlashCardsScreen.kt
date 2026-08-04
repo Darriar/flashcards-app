@@ -69,9 +69,7 @@ fun FlashCardsScreen(module: Module, onExit: () -> Unit) {
     var isFlipped by remember { mutableStateOf(false) }
     var currentIndex by remember { mutableIntStateOf(0) }
 
-    val cardsToLearn = remember(module, sessionTrigger) {
-        module.getCardsToLearn()
-    }
+    val cardsToLearn = remember(module, sessionTrigger) { module.getCardsToLearn() }
 
     if (isFinished) {
         module.finishLearning(cardsToLearn, wrongAnswers)
