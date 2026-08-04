@@ -1,6 +1,6 @@
 package com.example.flushcards.navigation
 
-import android.util.Log
+import EditModuleScreen
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -19,7 +19,6 @@ import com.example.flushcards.model.Module
 import com.example.flushcards.model.ModuleConfig
 import com.example.flushcards.model.Screen
 import com.example.flushcards.screens.CurrentModuleScreen
-import com.example.flushcards.screens.EditModuleScreen
 import com.example.flushcards.screens.MyModulesScreen
 import com.example.flushcards.screens.learningScreens.FlashCardsScreen
 import com.example.flushcards.screens.learningScreens.MatchScreen
@@ -34,7 +33,7 @@ import kotlinx.serialization.json.Json
 @Composable
 fun FlipCardsNavigation() {
 
-    var currentScreen by remember { mutableStateOf(Screen.MyModules) }
+    var currentScreen by remember { mutableStateOf(Screen.Write) }
     val cards = remember {
         mutableStateListOf(
             FlashCard(1, "assess", "оценивать"),

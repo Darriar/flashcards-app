@@ -1,5 +1,6 @@
 package com.example.flushcards.screens
 
+import ButtonScrollDown
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,7 +24,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowRight
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Extension
+import androidx.compose.material.icons.filled.Keyboard
+import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Style
 import androidx.compose.material3.Card
@@ -46,6 +51,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -103,22 +109,29 @@ fun CurrentModuleScreen(
                     ModeCard(
                         title = "Флеш-карточки",
                         description = "Повторяйте термины и проверяйте себя в классическом режиме",
-                        iconRes = R.drawable.ic_back, // Замените на иконку карточек (например, слои или блокнот)
+                        icon = Icons.Default.Layers,
                         onClick = { onNavigate(Screen.FlipCards) }
                     )
 
                     ModeCard(
                         title = "Тест",
                         description = "Выбирайте правильное значение из нескольких вариантов",
-                        iconRes = R.drawable.ic_back, // Замените на иконку теста (например, галочка с пунктами)
+                        icon = Icons.Default.Quiz,
                         onClick = { onNavigate(Screen.Quiz) }
                     )
 
                     ModeCard(
                         title = "Мэтчинг",
                         description = "Соединяйте слова и их значения",
-                        iconRes = R.drawable.ic_back, // Замените на иконку пазла или стрелочек соединения
+                        icon = Icons.Default.Extension,
                         onClick = { onNavigate(Screen.Match) }
+                    )
+
+                    ModeCard(
+                        title = "Письменная практика",
+                        description = "Вводите точные переводы для максимального запоминания",
+                        icon = Icons.Default.Keyboard,
+                        onClick = { onNavigate(Screen.Write)}
                     )
 
                     Spacer(modifier = Modifier.height(10.dp))
@@ -170,7 +183,7 @@ fun CurrentModuleScreen(
 fun ModeCard(
     title: String,
     description: String,
-    iconRes: Int,
+    icon: ImageVector,
     onClick: () -> Unit
 ) {
     Card(
@@ -200,7 +213,7 @@ fun ModeCard(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    painter = painterResource(id = iconRes),
+                    imageVector = icon,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(24.dp)

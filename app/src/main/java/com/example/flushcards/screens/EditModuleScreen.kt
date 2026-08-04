@@ -1,9 +1,8 @@
-package com.example.flushcards.screens
-
 import android.annotation.SuppressLint
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -17,14 +16,21 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -70,6 +76,7 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -90,7 +97,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 
-@SuppressLint("FrequentlyChangingValue")
 @Composable
 fun EditModuleScreen(module: Module, onOk: (localModule: Module) -> Unit, onExit: (localModule: Module) -> Unit) {
 
@@ -126,11 +132,13 @@ fun EditModuleScreen(module: Module, onOk: (localModule: Module) -> Unit, onExit
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Vertical).union(WindowInsets.ime))
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 32.dp),
+                .padding(horizontal = 16.dp)
+                .padding(top = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
@@ -141,9 +149,11 @@ fun EditModuleScreen(module: Module, onOk: (localModule: Module) -> Unit, onExit
             LazyColumn(
                 state = cardsListState,
                 modifier = Modifier
-                    .weight(1f)
-                    .imePadding(),
-                contentPadding = PaddingValues(vertical = 8.dp),
+                    .weight(1f),
+                contentPadding = PaddingValues(
+                    top = 8.dp,
+                    bottom = 120.dp
+                ),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 item {
@@ -205,10 +215,10 @@ fun EditModuleScreen(module: Module, onOk: (localModule: Module) -> Unit, onExit
                     )
 
                 }
-
-                item { Spacer(modifier = Modifier.height(100.dp)) }
             }
         }
+
+
 
         Button(
             onClick = {
