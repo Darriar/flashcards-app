@@ -1,6 +1,7 @@
 package com.example.flushcards.screens
 
 import ButtonScrollDown
+import SearchCard
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -32,6 +34,7 @@ import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Style
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -58,6 +61,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -94,7 +98,7 @@ fun CurrentModuleScreen(
                         .padding(start = 16.dp, end = 16.dp, top = 8.dp
                 )
                 ) {
-                    CurrentScreenHeader(currentModule, onNavigate, onDelete, onExit)
+                    CurrentScreenHeader(currentModule, cardsInfoState, onNavigate, onDelete, onExit)
                 }
             }
         ) { innerPadding ->
@@ -302,10 +306,13 @@ fun CardInfo(card: FlashCard) {
 @Composable
 fun CurrentScreenHeader(
     module: Module,
+    cardsInfoState: LazyListState,
     onNavigate: (Screen) -> Unit,
     onDelete: (Module) -> Unit,
     onBack: () -> Unit
 ) {
+    var isSearchActive by remember { mutableStateOf(false) }
+
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -338,11 +345,32 @@ fun CurrentScreenHeader(
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(horizontal = 40.dp)
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 12.dp)
             )
 
-            Menu(module, onNavigate, onDelete)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = "Search",
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(CircleShape)
+                        .clickable { isSearchActive = true },
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Menu(module, onNavigate, onDelete)
+            }
         }
+    }
+    if (isSearchActive) {
+        SearchCard(module.cards, cardsInfoState, onDismiss = { isSearchActive = false })
     }
 }
 
