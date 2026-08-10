@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.flushcards.model.FlashCard
 import com.example.flushcards.model.Module
+import com.example.flushcards.model.ModuleConfig
 import com.example.flushcards.ui.theme.FlushCardsTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -138,7 +139,7 @@ fun QuizScreen(module: Module, onExit: () -> Unit) {
                         }
 
                         scope.launch {
-                            delay(600)
+                            delay(ModuleConfig.HIGHLIGHT_DURATION)
                             selectedAnswer = null
                             if (currentIndex < cardsToLearn.size - 1) {
                                 currentIndex++
@@ -178,7 +179,7 @@ fun AnswerCard(answer: String, selectedAnswer: String?, currentCard: FlashCard, 
     }
 
     val borderColors = when {
-        (isCurrent && isCorrect) || (selectedAnswer != null && isCorrect) -> Color(0xFF81C784)
+        (isCurrent && isCorrect) || (selectedAnswer != null && isCorrect) -> MaterialTheme.colorScheme.tertiary
         isCurrent && !isCorrect -> MaterialTheme.colorScheme.error
         else -> MaterialTheme.colorScheme.outlineVariant
     }
@@ -219,8 +220,8 @@ fun AnswerCard(answer: String, selectedAnswer: String?, currentCard: FlashCard, 
 @Composable
 fun WordCard(
     word: String,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-    borderColor: Color = MaterialTheme.colorScheme.outline) {
+    containerColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+    borderColor: Color = MaterialTheme.colorScheme.outlineVariant) {
     OutlinedCard(
         border = BorderStroke(
             width = 2.dp,

@@ -3,12 +3,13 @@ package com.example.flushcards.screens
 import ButtonScrollDown
 import SearchCard
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,6 +27,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowRight
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Extension
@@ -53,6 +55,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -70,6 +73,9 @@ import com.example.flushcards.R
 import com.example.flushcards.model.FlashCard
 import com.example.flushcards.model.Module
 import com.example.flushcards.model.Screen
+import com.example.flushcards.ui.theme.FlushCardsTheme
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun CurrentModuleScreen(
@@ -207,7 +213,7 @@ fun ModeCard(
             .clickable { onClick() },
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
         Row(
@@ -265,9 +271,7 @@ fun CardInfo(card: FlashCard) {
             .padding(vertical = 6.dp),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
-                alpha = 0.5f
-            )
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
         Column(
@@ -375,149 +379,191 @@ fun CurrentScreenHeader(
 }
 
 @Composable
-fun Menu(module: Module, onNavigate: (Screen) -> Unit, onDelete: (Module) -> Unit) {
+fun Menu(
+    module: Module,
+    onNavigate: (Screen) -> Unit,
+    onDelete: (Module) -> Unit
+) {
     var menuExpanded by remember { mutableStateOf(false) }
     var subMenuExpanded by remember { mutableStateOf(false) }
 
-    Box() {
+    val scope = rememberCoroutineScope()
+    var isTermFirst by remember(module) { mutableStateOf(module.isTermFirst) }
+
+    Box {
         IconButton(onClick = { menuExpanded = true }) {
             Icon(
                 imageVector = Icons.Default.MoreVert,
-                contentDescription = "Показать меню",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                contentDescription = "Настройки модуля",
             )
         }
 
-        Box {
-            val isTermFirst = module.isTermFirst
-            IconButton(onClick = { menuExpanded = true }) {
-                Icon(Icons.Default.MoreVert, contentDescription = "Настройки модуля")
-            }
-
-            DropdownMenu(
-                expanded = menuExpanded,
-                onDismissRequest = {
-                    menuExpanded = false
-                    subMenuExpanded = false
-                },
+        DropdownMenu(
+            expanded = menuExpanded,
+            onDismissRequest = {
+                menuExpanded = false
+                subMenuExpanded = false
+            },
+            shape = RoundedCornerShape(16.dp),
+            containerColor = MaterialTheme.colorScheme.surface,
+            modifier = Modifier.border(
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                 shape = RoundedCornerShape(16.dp)
-            ) {
-                DropdownMenuItem(
-                    text = { Text("Редактировать", fontWeight = FontWeight.Medium) },
-                    leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
-                    onClick = {
-                        menuExpanded = false
-                        onNavigate(Screen.EditModule)
-                    }
-                )
+            )
+        ) {
+            DropdownMenuItem(
+                text = { Text("Редактировать", fontWeight = FontWeight.Medium) },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = null
+                    )
+                },
+                colors = MenuDefaults.itemColors(
+                    textColor = MaterialTheme.colorScheme.onSurface,
+                    leadingIconColor = MaterialTheme.colorScheme.primary
+                ),
+                onClick = {
+                    menuExpanded = false
+                    onNavigate(Screen.EditModule)
+                }
+            )
 
+            DropdownMenuItem(
+                text = { Text("Повторить все сначала", fontWeight = FontWeight.Medium) },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = null
+                    )
+                },
+                colors = MenuDefaults.itemColors(
+                    textColor = MaterialTheme.colorScheme.onSurface,
+                    leadingIconColor = MaterialTheme.colorScheme.primary
+                ),
+                onClick = {
+                    menuExpanded = false
+                    module.resetProgress()
+                }
+            )
+
+            Box {
                 DropdownMenuItem(
-                    text = {
-                        Text(
-                            "Повторить все сначала",
-                            fontWeight = FontWeight.Medium
-                        )
-                    },
+                    text = { Text("Режим карточек", fontWeight = FontWeight.Medium) },
                     leadingIcon = {
                         Icon(
-                            Icons.Default.Refresh,
+                            imageVector = Icons.Default.Style,
                             contentDescription = null
                         )
                     },
-                    onClick = {
-                        menuExpanded = false
-                        module.resetProgress()
-                    }
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.ArrowRight,
+                            contentDescription = null
+                        )
+                    },
+                    colors = MenuDefaults.itemColors(
+                        textColor = MaterialTheme.colorScheme.onSurface,
+                        leadingIconColor = MaterialTheme.colorScheme.primary,
+                        trailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                    onClick = { subMenuExpanded = !subMenuExpanded }
                 )
 
-                Box {
+                DropdownMenu(
+                    expanded = subMenuExpanded,
+                    onDismissRequest = { subMenuExpanded = false },
+                    shape = RoundedCornerShape(16.dp),
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    modifier = Modifier.border(
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                ) {
                     DropdownMenuItem(
-                        text = { Text("Режим карточек", fontWeight = FontWeight.Medium) },
+                        text = {
+                            Text(
+                                text = "Термин ➔ Определение",
+                                fontWeight = if (isTermFirst) FontWeight.Bold else FontWeight.Medium
+                            )
+                        },
                         leadingIcon = {
-                            Icon(
-                                Icons.Default.Style,
-                                contentDescription = null
-                            )
+                            if (isTermFirst) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null
+                                )
+                            }
                         },
-                        trailingIcon = {
-                            Icon(
-                                Icons.Default.ArrowRight,
-                                contentDescription = null
-                            )
-                        },
-                        onClick = { subMenuExpanded = !subMenuExpanded }
+                        colors = MenuDefaults.itemColors(
+                            textColor = if (isTermFirst) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                            leadingIconColor = MaterialTheme.colorScheme.primary
+                        ),
+                        onClick = {
+                            isTermFirst = true
+                            module.showTermFirst()
+
+                            scope.launch {
+                                delay(300)
+                                subMenuExpanded = false
+                                menuExpanded = false
+                            }
+                        }
                     )
 
-                    DropdownMenu(
-                        expanded = subMenuExpanded,
-                        onDismissRequest = { subMenuExpanded = false },
-                        shape = RoundedCornerShape(16.dp)
-                    ) {
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    "Термин ➔ Определение",
-                                    fontWeight = FontWeight.Medium
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = "Определение ➔ Термин",
+                                fontWeight = if (!isTermFirst) FontWeight.Bold else FontWeight.Medium
+                            )
+                        },
+                        leadingIcon = {
+                            if (!isTermFirst) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null
                                 )
-                            },
-                            colors = MenuDefaults.itemColors(
-                                textColor = if (isTermFirst) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                                leadingIconColor = if (isTermFirst) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                            ),
-                            modifier = Modifier.background(
-                                if (isTermFirst) MaterialTheme.colorScheme.primaryContainer.copy(
-                                    alpha = 0.4f
-                                ) else MaterialTheme.colorScheme.surface
-                            ),
-                            onClick = {
-                                subMenuExpanded = false
-                                menuExpanded = false
-                                module.showTermFirst()
                             }
-                        )
+                        },
+                        colors = MenuDefaults.itemColors(
+                            textColor = if (!isTermFirst) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                            leadingIconColor = MaterialTheme.colorScheme.primary
+                        ),
+                        onClick = {
+                            isTermFirst = false
+                            module.showMeaningFirst()
 
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    "Определение ➔ Термин",
-                                    fontWeight = FontWeight.Medium
-                                )
-                            },
-                            colors = MenuDefaults.itemColors(
-                                textColor = if (!isTermFirst) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                                leadingIconColor = if (!isTermFirst) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                            ),
-                            modifier = Modifier.background(
-                                if (!isTermFirst) MaterialTheme.colorScheme.primaryContainer.copy(
-                                    alpha = 0.4f
-                                ) else MaterialTheme.colorScheme.surface
-                            ),
-                            onClick = {
+                            scope.launch {
+                                delay(300)
                                 subMenuExpanded = false
                                 menuExpanded = false
-                                module.showMeaningFirst()
                             }
-                        )
-                    }
+                        }
+                    )
                 }
-
-                DropdownMenuItem(
-                    text = { Text("Удалить", fontWeight = FontWeight.Medium) },
-                    leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
-                    colors = MenuDefaults.itemColors(
-                        textColor = MaterialTheme.colorScheme.error,
-                        leadingIconColor = MaterialTheme.colorScheme.error
-                    ),
-                    onClick = {
-                        menuExpanded = false
-                        onNavigate(Screen.MyModules)
-                        onDelete(module)
-                    }
-                )
             }
+
+            DropdownMenuItem(
+                text = { Text("Удалить", fontWeight = FontWeight.Medium) },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = null
+                    )
+                },
+                colors = MenuDefaults.itemColors(
+                    textColor = MaterialTheme.colorScheme.error,
+                    leadingIconColor = MaterialTheme.colorScheme.error
+                ),
+                onClick = {
+                    menuExpanded = false
+                    onNavigate(Screen.MyModules)
+                    onDelete(module)
+                }
+            )
         }
     }
-
 }
 
 @Preview(showBackground = true)
@@ -532,7 +578,7 @@ fun CurrentModulePreview() {
         )
     }
     val currentModule = Module(1, "textModule", cards, true)
-    MaterialTheme() {
+    FlushCardsTheme {
         CurrentModuleScreen(currentModule, onNavigate = {}, onDelete = {}, onExit = {})
     }
 }
@@ -540,7 +586,7 @@ fun CurrentModulePreview() {
 @Preview(showBackground = true)
 @Composable
 fun CardInfoPreview() {
-    MaterialTheme() {
+    FlushCardsTheme {
         CardInfo(FlashCard(1, "assess", "оценивать"))
     }
 }

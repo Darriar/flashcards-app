@@ -3,28 +3,27 @@ package com.example.flushcards.ui.theme
 import androidx.compose.ui.graphics.Color
 
 
-val CorrectGreen = Color(0xFF4CAF50)
-val WrongRed = Color(0xFFF44336)
-val LearnedBlueBg = Color(0xFFE3F2FD)
+val DeepWater = Color(0xFF003B46)
+val Ocean = Color(0xFF07575B)
+val Wave = Color(0xFF66A5AD)
+val SeaFoam = Color(0xFFC4DFE6)
 
-val ButtonGradientStart = Color(0xFF7E91D4)
-val ButtonGradientEnd = Color(0xFF6200EE)
+val CorrectGreenLight = Color(0xFF1B8A5A)
+val CorrectContainerLight = Color(0xFFD2F4E2)
+val CorrectGreenDark = Color(0xFF7FD9B3)
+val CorrectContainerDark = Color(0xFF0D3E28)
 
-val PrimaryIndigo = Color(0xFF4F46E5)
-val OnPrimaryWhite = Color(0xFFFFFFFF)
+val IncorrectRedLight = Color(0xFFC62828)
+val IncorrectContainerLight = Color(0xFFFCDAD7)
+val IncorrectRedDark = Color(0xFFF2B8B5)
+val IncorrectContainerDark = Color(0xFF531311)
 
-val BackgroundScreen = Color(0xFFDFDFEE)
+val LightBackground = Color(0xFFF3F8F9)
+val LightSurface = Color(0xFFFAFCFD)
+val LightOnSurface = Color(0xFF0B1E21)
+val LightSurfaceVariant = Color(0xFFE5F1F4)
 
-val OutlineVariant = Color(0xFF90A4BB)
-
-//val BackgroundScreen = Color(0xFFF8FAFC)
-val SurfaceCard = Color(0xFFFFFFFF)
-//♠val OutlineVariant = Color(0xFFE2E8F0)
-
-val SuccessGreen = Color(0xFF2E7D32)
-val SuccessContainerGreen = Color(0xFFE8F5E9)
-
-val ErrorRed = Color(0xFFD32F2F)
-val ErrorContainerRed = Color(0xFFFEE2E2)
-val OnErrorText = Color(0xFF991B1B)
-val Black = Color(0xFF1E2235)
+val DarkBackground = Color(0xFF061316)
+val DarkSurface = Color(0xFF0D1B1E)
+val DarkOnSurface = Color(0xFFE2F1F4)
+val DarkSurfaceVariant = Color(0xFF162A2E)

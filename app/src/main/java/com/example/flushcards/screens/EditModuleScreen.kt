@@ -207,7 +207,7 @@ fun EditModuleScreen(module: Module, onOk: (localModule: Module) -> Unit, onExit
                 item {
                     if (validCardsCount < ModuleConfig.MIN_CARDS_COUNT) {
                         Surface(
-                            color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f),
+                            color = MaterialTheme.colorScheme.errorContainer,
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -404,7 +404,7 @@ fun CreateCard(
                     )
                 },
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
             )
         ) {
             Column(modifier = Modifier.padding(12.dp)) {
@@ -612,7 +612,7 @@ fun SearchCard(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             shape = RoundedCornerShape(24.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            color = MaterialTheme.colorScheme.surface,
             shadowElevation = 8.dp
         ) {
             Column(
@@ -627,7 +627,7 @@ fun SearchCard(
                     Surface(
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                        color = MaterialTheme.colorScheme.surfaceVariant
                     ) {
                         TextField(
                             value = searchWord,
@@ -643,7 +643,7 @@ fun SearchCard(
                                 Icon(
                                     imageVector = Icons.Default.Search,
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(20.dp)
                                 )
                             },
@@ -686,7 +686,7 @@ fun SearchCard(
                             modifier = Modifier
                                 .padding(horizontal = 8.dp, vertical = 6.dp)
                                 .fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                            color = MaterialTheme.colorScheme.outlineVariant,
                             thickness = 1.dp
                         )
 
@@ -704,7 +704,7 @@ fun SearchCard(
                                 text = statusText,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = if (resultIndexes.isEmpty()) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.primary
+                                color = if (resultIndexes.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary
                             )
 
                             Row {
@@ -724,9 +724,7 @@ fun SearchCard(
                                     Icon(
                                         imageVector = Icons.Default.ArrowUpward,
                                         contentDescription = "Предыдущее совпадение",
-                                        tint = if (resultIndexes.isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(
-                                            alpha = 0.3f
-                                        )
+                                        tint = if (resultIndexes.isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
                                     )
                                 }
 
@@ -747,9 +745,7 @@ fun SearchCard(
                                     Icon(
                                         imageVector = Icons.Default.ArrowDownward,
                                         contentDescription = "Следующее совпадение",
-                                        tint = if (resultIndexes.isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(
-                                            alpha = 0.3f
-                                        )
+                                        tint = if (resultIndexes.isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
                                     )
                                 }
                             }

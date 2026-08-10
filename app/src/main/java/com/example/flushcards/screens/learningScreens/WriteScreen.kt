@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.flushcards.model.FlashCard
 import com.example.flushcards.model.Module
+import com.example.flushcards.model.ModuleConfig
 import com.example.flushcards.ui.theme.FlushCardsTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -105,13 +106,13 @@ fun WriteScreen(module: Module, onExit: () -> Unit) {
                     answerState = true
                     currentCard.rightAnswer()
                     rightAnswers++
-                    delay(700)
+                    delay(ModuleConfig.HIGHLIGHT_DURATION)
                     currentIndex++
                 } else {
                     answerState = false
                     if (currentCard.isFirstTry) wrongAnswers++
                     currentCard.wrongAnswer()
-                    delay(700)
+                    delay(ModuleConfig.HIGHLIGHT_DURATION)
                     answerState = null
                 }
 
@@ -125,7 +126,7 @@ fun WriteScreen(module: Module, onExit: () -> Unit) {
             isProcessing = true
             scope.launch {
                 showAnswer = true
-                delay(1500)
+                delay(ModuleConfig.HIGHLIGHT_DURATION * 2)
                 currentIndex++
 
                 if (currentIndex == cardsToLearn.size) isFinished = true
@@ -257,7 +258,7 @@ fun WriteScreen(module: Module, onExit: () -> Unit) {
 fun getBorderColor(state: Boolean?): Color {
     val borderColor by animateColorAsState(
         targetValue = when (state) {
-            true -> Color(0xFF81C784)
+            true -> MaterialTheme.colorScheme.tertiary
             false -> MaterialTheme.colorScheme.error
             null -> MaterialTheme.colorScheme.outlineVariant
         },
@@ -270,8 +271,8 @@ fun getBorderColor(state: Boolean?): Color {
 fun getContainerColor(state: Boolean?): Color {
     val containerColor by animateColorAsState(
         targetValue = when (state) {
-            true -> MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f)
-            false -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f)
+            true -> MaterialTheme.colorScheme.tertiaryContainer
+            false -> MaterialTheme.colorScheme.errorContainer
             null -> MaterialTheme.colorScheme.surface
         },
         label = "ContainerColorAnimation"

@@ -12,51 +12,63 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
+// ☀️ СВЕТЛАЯ ТЕМА
 val LightColorScheme = lightColorScheme(
-    primary = PrimaryIndigo,
-    onPrimary = OnPrimaryWhite,
-    background = BackgroundScreen,
-    surface = SurfaceCard,
-    surfaceVariant = SurfaceCard, // Используем для карточек
-    outlineVariant = OutlineVariant,
-
-    // Передаем зеленый цвет в Tertiary роли
-    tertiary = SuccessGreen,
-    tertiaryContainer = SuccessContainerGreen,
-    onTertiaryContainer = SuccessGreen,
-
-    // Передаем красный цвет в Error роли
-    error = ErrorRed,
-    errorContainer = ErrorContainerRed,
-    onErrorContainer = OnErrorText
-)
-
-private val DarkColorScheme = darkColorScheme(
-
-    onBackground = Color(0xFFE8EBFA),
-)
-
-/*private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
-
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40*/
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
+    primary = Ocean,
     onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
+    primaryContainer = SeaFoam,
+    onPrimaryContainer = DeepWater,
 
-)*/
+    // ❇️ Верный ответ (Tertiary)
+    tertiary = CorrectGreenLight,
+    onTertiary = Color.White,
+    tertiaryContainer = CorrectContainerLight,
+    onTertiaryContainer = CorrectGreenLight,
+
+    // 🛑 Неверный ответ (Error)
+    error = IncorrectRedLight,
+    onError = Color.White,
+    errorContainer = IncorrectContainerLight,
+    onErrorContainer = IncorrectRedLight,
+
+    background = LightBackground,
+    onBackground = LightOnSurface,
+    surface = LightSurface,
+    onSurface = LightOnSurface,
+    surfaceVariant = LightSurfaceVariant,
+    onSurfaceVariant = DeepWater,
+    outline = Wave,
+    outlineVariant = SeaFoam
+)
+
+// 🌙 ТЁМНАЯ ТЕМА
+val DarkColorScheme = darkColorScheme(
+    primary = Wave,
+    onPrimary = Color(0xFF001F25),
+    primaryContainer = DeepWater,
+    onPrimaryContainer = SeaFoam,
+
+    // ❇️ Верный ответ (Tertiary)
+    tertiary = CorrectGreenDark,
+    onTertiary = Color(0xFF003822),
+    tertiaryContainer = CorrectContainerDark,
+    onTertiaryContainer = CorrectGreenDark,
+
+    // 🛑 Неверный ответ (Error)
+    error = IncorrectRedDark,
+    onError = Color(0xFF601410),
+    errorContainer = IncorrectContainerDark,
+    onErrorContainer = IncorrectRedDark,
+
+    background = DarkBackground,
+    onBackground = DarkOnSurface,
+    surface = DarkSurface,
+    onSurface = DarkOnSurface,
+    surfaceVariant = DarkSurfaceVariant,
+    onSurfaceVariant = SeaFoam,
+    outline = Wave,
+    outlineVariant = Ocean
+)
 
 @Composable
 fun FlushCardsTheme(

@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.sp
 import com.example.flushcards.R
 import com.example.flushcards.model.FlashCard
 import com.example.flushcards.model.Module
+import com.example.flushcards.model.ModuleConfig
 import com.example.flushcards.ui.theme.FlushCardsTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -142,7 +143,7 @@ fun MatchScreen(module: Module, onExit: () -> Unit) {
                     selectedWord = null
                     selectedMeaning = null
 
-                    delay(500)
+                    delay(ModuleConfig.HIGHLIGHT_DURATION)
 
                     if (isCorrect) {
                         val wordIndex = currentWords.indexOf(wordCard)
@@ -333,7 +334,7 @@ fun MatchCard(
         targetValue = when {
             isSelected -> MaterialTheme.colorScheme.primary
             isCorrect == true -> MaterialTheme.colorScheme.tertiaryContainer
-            isCorrect == false -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f)
+            isCorrect == false -> MaterialTheme.colorScheme.errorContainer
             else -> MaterialTheme.colorScheme.surface
         },
         label = "CardColorAnimation"
@@ -436,9 +437,7 @@ fun MatchScreenPreview() {
     )
 
     val module = Module(1,"Match Test", cards)
-    MaterialTheme() {
-        FlushCardsTheme {
-            MatchScreen(module = module, onExit = {})
-        }
+    FlushCardsTheme {
+        MatchScreen(module = module, onExit = {})
     }
 }
