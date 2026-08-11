@@ -6,6 +6,8 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -51,6 +53,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -76,8 +79,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -249,10 +254,6 @@ fun EditModuleScreen(module: Module, onOk: (localModule: Module) -> Unit, onExit
             }
         }
 
-
-
-
-
         ButtonScrollDown(
             state = cardsListState,
             cards = localModule.cards,
@@ -288,7 +289,11 @@ fun EditModuleScreen(module: Module, onOk: (localModule: Module) -> Unit, onExit
 }
 
 @Composable
-fun ButtonScrollDown(state: LazyListState, cards: List<FlashCard>, modifier: Modifier = Modifier) {
+fun ButtonScrollDown(
+    state: LazyListState,
+    cards: List<FlashCard>,
+    modifier: Modifier = Modifier
+) {
     val scope = rememberCoroutineScope()
 
     val isLastCardVisible by remember(state, cards.size) {
@@ -296,7 +301,6 @@ fun ButtonScrollDown(state: LazyListState, cards: List<FlashCard>, modifier: Mod
             if (cards.isEmpty()) return@derivedStateOf false
 
             val lastCardId = cards.last().id
-
             val lastCardInfo = state.layoutInfo.visibleItemsInfo.find { it.key == lastCardId }
             if (lastCardInfo != null) {
                 val cardBottom = lastCardInfo.offset + lastCardInfo.size
@@ -312,27 +316,32 @@ fun ButtonScrollDown(state: LazyListState, cards: List<FlashCard>, modifier: Mod
         enter = fadeIn(),
         exit = fadeOut(),
         modifier = modifier
-            .padding(end = 24.dp)
-            .size(56.dp)
     ) {
-        FloatingActionButton(
-            onClick = {
-                scope.launch {
-                    if (state.layoutInfo.totalItemsCount > 0) {
-                        state.animateScrollToItem(state.layoutInfo.totalItemsCount - 1)
-                    }
-                }
-            },
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            shape = CircleShape,
+        Box(
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
         ) {
-
-            Icon(
-                imageVector = Icons.Default.ArrowDownward,
-                contentDescription = "Прокрутить вниз",
-                modifier = Modifier.size(28.dp)
-            )
+            FloatingActionButton(
+                onClick = {
+                    scope.launch {
+                        if (state.layoutInfo.totalItemsCount > 0) {
+                            state.animateScrollToItem(state.layoutInfo.totalItemsCount - 1)
+                        }
+                    }
+                },
+                shape = CircleShape,
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.shadow(
+                    elevation = 6.dp,
+                    shape = CircleShape
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ArrowDownward,
+                    contentDescription = "Прокрутить вниз",
+                    modifier = Modifier.size(28.dp)
+                )
+            }
         }
     }
 }

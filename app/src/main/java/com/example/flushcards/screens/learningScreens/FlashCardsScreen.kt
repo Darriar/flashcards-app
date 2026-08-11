@@ -1,14 +1,17 @@
 package com.example.flushcards.screens.learningScreens
 
+import android.annotation.SuppressLint
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,6 +46,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -231,48 +236,55 @@ fun FlashCardView(
 ) {
     val offsetX = remember { Animatable(0f) }
     val cardAlpha = remember { Animatable(0f) }
+    val rotation = remember { Animatable(0f) }
+
     var isLabelVisible by remember { mutableStateOf(true) }
     val flipDuration = 400
     val scope = rememberCoroutineScope()
-    val rotationYs = remember(offsetX.value) {
-        (offsetX.value / 10).coerceIn(-15f, 15f)
-    }
+
+    val density = LocalDensity.current
+    val screenWidthPx = with(density) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
+    val swipeThreshold = screenWidthPx * 0.35f
+    val minOffsetPx = with(density) { 25.dp.toPx() }
 
     LaunchedEffect(card) {
         isLabelVisible = true
         offsetX.snapTo(0f)
+        rotation.snapTo(0f)
         cardAlpha.snapTo(0f)
         cardAlpha.animateTo(1f, animationSpec = tween(flipDuration))
     }
 
-    Card(
+    LaunchedEffect(isFlipped) {
+        val targetRotation = if (isFlipped) 180f else 0f
+        if (rotation.value != targetRotation) {
+            rotation.animateTo(targetRotation, tween(600))
+        }
+    }
+
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(420.dp)
             .padding(horizontal = 16.dp)
-            .clip(RoundedCornerShape(28.dp))
-            .clickable { onFlip() }
-            .graphicsLayer {
-                translationX = offsetX.value
-                rotationY = rotationYs
-                cameraDistance = 12 * density
-                alpha = cardAlpha.value
+            .pointerInput(card) {
+                detectTapGestures(onTap = { onFlip() })
             }
             .pointerInput(card) {
                 detectHorizontalDragGestures(
                     onDragEnd = {
                         when {
-                            offsetX.value > 300f -> {
+                            offsetX.value > swipeThreshold -> {
                                 scope.launch {
                                     isLabelVisible = false
-                                    offsetX.animateTo(1000f, tween(flipDuration))
+                                    offsetX.animateTo(screenWidthPx * 1.5f, tween(flipDuration))
                                     onSwipeRight()
                                 }
                             }
-                            offsetX.value < -300f -> {
+                            offsetX.value < -swipeThreshold -> {
                                 scope.launch {
                                     isLabelVisible = false
-                                    offsetX.animateTo(-1000f, tween(flipDuration))
+                                    offsetX.animateTo(-screenWidthPx * 1.5f, tween(flipDuration))
                                     onSwipeLeft()
                                 }
                             }
@@ -280,61 +292,81 @@ fun FlashCardView(
                                 scope.launch { offsetX.animateTo(0f, tween(flipDuration)) }
                             }
                         }
-                    }, onHorizontalDrag = { change, dragAmount ->
+                    },
+                    onHorizontalDrag = { change, dragAmount ->
                         change.consume()
                         scope.launch { offsetX.snapTo(offsetX.value + dragAmount) }
                     }
                 )
-            },
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            }
+            .graphicsLayer {
+                translationX = offsetX.value
+                rotationZ = (offsetX.value / screenWidthPx) * 15f
+                alpha = cardAlpha.value
+            }
     ) {
-        Box(
+        Card(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
-            contentAlignment = Alignment.Center
+                .clip(RoundedCornerShape(28.dp))
+                .graphicsLayer {
+                    rotationY = rotation.value
+                    cameraDistance = 12f * density.density
+                },
+            shape = RoundedCornerShape(28.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
-            val minOffset = 25
-
-            this@Card.AnimatedVisibility(
-                visible = isLabelVisible && (offsetX.value > minOffset || offsetX.value < -minOffset),
-                enter = fadeIn(),
-                exit = fadeOut(),
+            Box(
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 16.dp)
+                    .fillMaxSize()
+                    .padding(24.dp),
+                contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = if (offsetX.value > minOffset) stringResource(R.string.i_know) else stringResource(R.string.i_dont_know),
-                    color = if (offsetX.value > minOffset) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
+                    text = if (rotation.value < 90f) card.word else card.meaning,
+                    fontSize = 30.sp,
+                    lineHeight = 36.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(horizontal = 16.dp)
+                        .graphicsLayer { rotationY = if (rotation.value >= 90f) 180f else 0f }
+                )
+
+                Text(
+                    text = stringResource(id = R.string.tap_to_flip),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .graphicsLayer { rotationY = if (rotation.value >= 90f) 180f else 0f },
+                    letterSpacing = 1.sp
                 )
             }
+        }
 
-            Text(
-                text = if (!isFlipped) card.word else card.meaning,
-                fontSize = 30.sp,
-                lineHeight = 36.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .padding(horizontal = 16.dp)
-            )
+        val isSwipingRight = offsetX.value > minOffsetPx
+        val isSwipingLeft = offsetX.value < -minOffsetPx
 
+        AnimatedVisibility(
+            visible = isLabelVisible && (isSwipingRight || isSwipingLeft),
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 24.dp)
+        ) {
             Text(
-                text = stringResource(id = R.string.tap_to_flip),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                modifier = Modifier.align(Alignment.BottomCenter),
-                letterSpacing = 1.sp
+                text = stringResource(if (isSwipingRight) R.string.i_know else R.string.i_dont_know),
+                color = if (isSwipingRight) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
             )
         }
     }
