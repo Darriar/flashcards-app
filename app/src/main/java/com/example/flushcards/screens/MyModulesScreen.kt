@@ -1,6 +1,7 @@
 package com.example.flushcards.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,9 +16,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.ModeNight
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -30,6 +34,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -38,13 +43,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.flushcards.model.FlashCard
 import com.example.flushcards.model.Module
+import com.example.flushcards.model.ThemeManager
 import com.example.flushcards.ui.theme.FlushCardsTheme
 
 @Composable
 fun MyModulesScreen(
     modules: MutableList<Module>,
     onModuleCLick: (module: Module) -> Unit,
-    onAddModule: (Module) -> Unit
+    onAddModule: (Module) -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -54,13 +60,35 @@ fun MyModulesScreen(
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-            Text(
-                text = "Мои модули",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 32.dp, bottom = 16.dp)
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = 24.dp,
+                        end = 24.dp,
+                        top = 32.dp,
+                        bottom = 16.dp
+                    ),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Мои модули",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    )
+
+                Icon(
+                    imageVector = if (ThemeManager.isDarkTheme) Icons.Default.ModeNight else Icons.Default.LightMode,
+                    contentDescription = "Theme",
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(CircleShape)
+                        .clickable { ThemeManager.changeTheme() },
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
             if (modules.isEmpty()) {
                 Box(
@@ -129,7 +157,7 @@ fun MyModulesScreen(
         Button(
             onClick = {
                 val id = if (modules.isEmpty()) 1 else modules.maxOf { it.id } + 1
-                val newModule = Module(id,"Новый модуль", mutableListOf())
+                val newModule = Module(id, "Новый модуль", mutableListOf())
                 onAddModule(newModule)
             },
             modifier = Modifier
@@ -173,7 +201,12 @@ fun MyCardsPreview() {
     }
     FlushCardsTheme {
         MyModulesScreen(
-            modules = remember { mutableStateListOf(Module(1,"English Words", cards), Module(1,"Испанский базовый", mutableListOf())) },
+            modules = remember {
+                mutableStateListOf(
+                    Module(1, "English Words", cards),
+                    Module(1, "Испанский базовый", mutableListOf())
+                )
+            },
             onModuleCLick = {},
             onAddModule = {}
         )

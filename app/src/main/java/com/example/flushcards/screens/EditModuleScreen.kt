@@ -1,13 +1,13 @@
-import android.annotation.SuppressLint
+package com.example.flushcards.screens
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -15,26 +15,17 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -53,7 +44,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -82,9 +72,7 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -100,14 +88,17 @@ import com.example.flushcards.api.TranslationService
 import com.example.flushcards.model.FlashCard
 import com.example.flushcards.model.Module
 import com.example.flushcards.model.ModuleConfig
-import com.example.flushcards.screens.CurrentScreenHeader
 import com.example.flushcards.ui.theme.FlushCardsTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 
 @Composable
-fun EditModuleScreen(module: Module, onOk: (localModule: Module) -> Unit, onExit: (localModule: Module) -> Unit) {
+fun EditModuleScreen(
+    module: Module,
+    onOk: (localModule: Module) -> Unit,
+    onExit: (localModule: Module) -> Unit
+) {
 
     var localModule by remember {
         val initialCards = buildList {
@@ -134,6 +125,15 @@ fun EditModuleScreen(module: Module, onOk: (localModule: Module) -> Unit, onExit
 
     val cardsListState = rememberLazyListState()
     val scope = rememberCoroutineScope()
+    var highlightedCardIndex by remember { mutableIntStateOf(-1) }
+
+    LaunchedEffect(highlightedCardIndex) {
+        if (highlightedCardIndex < 0)  return@LaunchedEffect
+        cardsListState.animateScrollToItem(highlightedCardIndex)
+
+        delay(1500)
+        highlightedCardIndex = -1
+    }
 
     BackHandler { onExit(localModule) }
 
@@ -141,7 +141,7 @@ fun EditModuleScreen(module: Module, onOk: (localModule: Module) -> Unit, onExit
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-
+            .statusBarsPadding()
     ) {
         Scaffold(
             containerColor = Color.Transparent,
@@ -152,7 +152,12 @@ fun EditModuleScreen(module: Module, onOk: (localModule: Module) -> Unit, onExit
                         .statusBarsPadding()
                         .padding(start = 16.dp, end = 16.dp, top = 8.dp)
                 ) {
-                    CreateModuleHeader(onExit, localModule, cardsListState)
+                    CreateModuleHeader(
+                        onBack = onExit,
+                        module = localModule,
+                        onSelectCard = { index ->
+                            highlightedCardIndex = index
+                        })
                 }
             },
             bottomBar = {
@@ -232,12 +237,11 @@ fun EditModuleScreen(module: Module, onOk: (localModule: Module) -> Unit, onExit
 
                 itemsIndexed(
                     items = localModule.cards,
-
                     key = { _, card -> card.id }
                 ) { index, card ->
-
                     CreateCard(
                         card = card,
+                        isHighlighted = index == highlightedCardIndex,
                         onWordChange = { newWord ->
                             localModule.cards[index] = card.copy(word = newWord)
                         },
@@ -318,7 +322,8 @@ fun ButtonScrollDown(
         modifier = modifier
     ) {
         Box(
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
+            modifier = Modifier
+                .padding(horizontal = 24.dp, vertical = 12.dp)
         ) {
             FloatingActionButton(
                 onClick = {
@@ -347,8 +352,38 @@ fun ButtonScrollDown(
 }
 
 @Composable
+fun getBackgroundCardColor(isHighlighted: Boolean): Color {
+    val backgroundColor by animateColorAsState(
+        targetValue = if (isHighlighted) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant
+        },
+        animationSpec = tween(
+            durationMillis = if (isHighlighted) 150 else 600
+        )
+    )
+    return backgroundColor
+}
+
+@Composable
+fun getBorderCardColor(isHighlighted: Boolean): Color {
+    val borderColor by animateColorAsState(
+        targetValue = if (isHighlighted) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            Color.Transparent
+        },
+        animationSpec = tween(
+            durationMillis = if (isHighlighted) 150 else 600
+        )
+    )
+    return borderColor
+}
+ @Composable
 fun CreateCard(
     card: FlashCard,
+    isHighlighted: Boolean,
     onWordChange: (String) -> Unit,
     onMeaningChange: (String) -> Unit,
     onDeleteCard: () -> Unit
@@ -360,7 +395,6 @@ fun CreateCard(
     val minCardWeight = 0.75f
     val maxDeleteWeight = 1f - minCardWeight
     val scope = rememberCoroutineScope()
-
 
     LaunchedEffect(card.word) {
         val word = card.word
@@ -377,12 +411,13 @@ fun CreateCard(
     Row(
         modifier = Modifier
             .height(intrinsicSize = IntrinsicSize.Min)
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp)),
+            .fillMaxWidth(),
+
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Card(
+            shape = RoundedCornerShape(20.dp),
             modifier = Modifier
                 .fillMaxHeight()
                 .fillMaxWidth()
@@ -412,9 +447,8 @@ fun CreateCard(
                         }
                     )
                 },
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            )
+            colors = CardDefaults.cardColors(containerColor = getBackgroundCardColor(isHighlighted)),
+            border = BorderStroke(2.dp, getBorderCardColor(isHighlighted)),
         ) {
             Column(modifier = Modifier.padding(12.dp)) {
                 TextField(
@@ -528,7 +562,7 @@ fun CreateCard(
 fun CreateModuleHeader(
     onBack: (localModule: Module) -> Unit,
     module: Module,
-    cardsListState: LazyListState
+    onSelectCard: (index: Int) -> Unit
 ) {
     var isSearchActive by remember { mutableStateOf(false) }
 
@@ -578,7 +612,11 @@ fun CreateModuleHeader(
         }
 
         if (isSearchActive) {
-            SearchCard(module.cards, cardsListState, onDismiss = { isSearchActive = false })
+            SearchCard(
+                module.cards,
+                onDismiss = { isSearchActive = false },
+                onSelectCard = onSelectCard
+            )
         }
     }
 }
@@ -586,27 +624,9 @@ fun CreateModuleHeader(
 @Composable
 fun SearchCard(
     cards: MutableList<FlashCard>,
-    cardsListState: LazyListState,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onSelectCard: (index: Int) -> Unit
 ) {
-
-    var searchWord by remember { mutableStateOf("") }
-    val scope = rememberCoroutineScope()
-
-    val resultIndexes by remember(searchWord, cards) {
-        derivedStateOf {
-            if (searchWord.isBlank()) emptyList()
-            else cards.mapIndexedNotNull { index, card ->
-                val query = searchWord.trim()
-                if (card.word.contains(query, ignoreCase = true) ||
-                    card.meaning.contains(query, ignoreCase = true)
-                ) index else null
-            }
-        }
-    }
-
-    var currentIndex by remember(resultIndexes) { mutableIntStateOf(0) }
-
     Popup(
         alignment = Alignment.TopCenter,
         onDismissRequest = onDismiss,
@@ -616,147 +636,176 @@ fun SearchCard(
             dismissOnClickOutside = true
         )
     ) {
-        Surface(
+        SearchCardContent(
+            cards = cards,
+            onDismiss = onDismiss,
+            onSelectCard = onSelectCard
+        )
+    }
+}
+
+@Composable
+fun SearchCardContent(
+    cards: List<FlashCard>,
+    onDismiss: () -> Unit,
+    onSelectCard: (index: Int) -> Unit,
+) {
+    var searchWord by remember { mutableStateOf("") }
+
+    val resultIndexes by remember(searchWord, cards) {
+        derivedStateOf {
+            if (searchWord.isBlank()) emptyList()
+            else cards.mapIndexedNotNull { index, card ->
+                if (card.word.contains(searchWord.trim(), ignoreCase = true) ||
+                    card.meaning.contains(searchWord.trim(), ignoreCase = true)
+                ) index else null
+            }
+        }
+    }
+
+    var currentIndex by remember(resultIndexes) { mutableIntStateOf(0) }
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(24.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 8.dp
+    ) {
+
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            shape = RoundedCornerShape(24.dp),
-            color = MaterialTheme.colorScheme.surface,
-            shadowElevation = 8.dp
+                .padding(8.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+                Surface(
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant
                 ) {
-                    Surface(
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant
-                    ) {
-                        TextField(
-                            value = searchWord,
-                            onValueChange = { searchWord = it },
-                            placeholder = {
-                                Text(
-                                    text = "Поиск по карточкам...",
-                                    fontSize = 14.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                                )
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.Search,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            },
-                            textStyle = TextStyle(
-                                fontSize = 15.sp,
-                                color = MaterialTheme.colorScheme.onSurface
-                            ),
-                            singleLine = true,
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent,
-                                disabledContainerColor = Color.Transparent,
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent
+                    TextField(
+                        value = searchWord,
+                        onValueChange = {
+                            searchWord = it
+                            if (resultIndexes.isNotEmpty()) onSelectCard(resultIndexes[currentIndex])
+                                        },
+                        placeholder = {
+                            Text(
+                                text = "Поиск по карточкам...",
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                             )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        },
+                        textStyle = TextStyle(
+                            fontSize = 15.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        ),
+                        singleLine = true,
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            disabledContainerColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent
                         )
-                    }
-
-                    Spacer(modifier = Modifier.width(6.dp))
-
-                    IconButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Закрыть поиск",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    )
                 }
 
-                AnimatedVisibility(
-                    visible = searchWord.isNotBlank(),
-                    enter = fadeIn(),
-                    exit = fadeOut()
+                Spacer(modifier = Modifier.width(6.dp))
+
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.size(40.dp)
                 ) {
-                    Column {
-                        HorizontalDivider(
-                            modifier = Modifier
-                                .padding(horizontal = 8.dp, vertical = 6.dp)
-                                .fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.outlineVariant,
-                            thickness = 1.dp
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Закрыть поиск",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            AnimatedVisibility(
+                visible = searchWord.isNotBlank(),
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                Column {
+                    HorizontalDivider(
+                        modifier = Modifier
+                            .padding(horizontal = 8.dp, vertical = 6.dp)
+                            .fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                        thickness = 1.dp
+                    )
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 10.dp, vertical = 2.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val statusText =
+                            if (resultIndexes.isEmpty()) "Ничего не найдено" else "${currentIndex + 1} из ${resultIndexes.size}"
+
+                        Text(
+                            text = statusText,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (resultIndexes.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary
                         )
 
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 10.dp, vertical = 2.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            val statusText =
-                                if (resultIndexes.isEmpty()) "Ничего не найдено" else "${currentIndex + 1} из ${resultIndexes.size}"
+                        Row {
+                            IconButton(
+                                onClick = {
+                                    if (resultIndexes.isNotEmpty()) {
+                                        currentIndex =
+                                            if (currentIndex > 0) currentIndex - 1 else resultIndexes.size - 1
+                                        onSelectCard(resultIndexes[currentIndex])
+                                    }
+                                },
+                                enabled = resultIndexes.isNotEmpty(),
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ArrowUpward,
+                                    contentDescription = "Предыдущее совпадение",
+                                    tint = if (resultIndexes.isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                                )
+                            }
 
-                            Text(
-                                text = statusText,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = if (resultIndexes.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary
-                            )
+                            Spacer(modifier = Modifier.width(4.dp))
 
-                            Row {
-                                IconButton(
-                                    onClick = {
-                                        if (resultIndexes.isNotEmpty()) {
-                                            currentIndex =
-                                                if (currentIndex > 0) currentIndex - 1 else resultIndexes.size - 1
-                                            scope.launch {
-                                                cardsListState.animateScrollToItem(resultIndexes[currentIndex])
-                                            }
-                                        }
-                                    },
-                                    enabled = resultIndexes.isNotEmpty(),
-                                    modifier = Modifier.size(32.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.ArrowUpward,
-                                        contentDescription = "Предыдущее совпадение",
-                                        tint = if (resultIndexes.isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-                                    )
-                                }
+                            IconButton(
+                                onClick = {
+                                    if (resultIndexes.isNotEmpty()) {
+                                        currentIndex = (currentIndex + 1) % resultIndexes.size
+                                        onSelectCard(resultIndexes[currentIndex])
 
-                                Spacer(modifier = Modifier.width(4.dp))
-
-                                IconButton(
-                                    onClick = {
-                                        if (resultIndexes.isNotEmpty()) {
-                                            currentIndex = (currentIndex + 1) % resultIndexes.size
-                                            scope.launch {
-                                                cardsListState.animateScrollToItem(resultIndexes[currentIndex])
-                                            }
-                                        }
-                                    },
-                                    enabled = resultIndexes.isNotEmpty(),
-                                    modifier = Modifier.size(32.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.ArrowDownward,
-                                        contentDescription = "Следующее совпадение",
-                                        tint = if (resultIndexes.isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-                                    )
-                                }
+                                    }
+                                },
+                                enabled = resultIndexes.isNotEmpty(),
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ArrowDownward,
+                                    contentDescription = "Следующее совпадение",
+                                    tint = if (resultIndexes.isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                                )
                             }
                         }
                     }
@@ -771,8 +820,21 @@ fun SearchCard(
 fun EditModulePreview() {
     FlushCardsTheme {
         EditModuleScreen(
-            module = Module(1,"English", mutableListOf(FlashCard(1, "test", "тестовый")), true),
+            module = Module(1, "English", mutableListOf(FlashCard(1, "test", "тестовый")), true),
             onOk = {}, onExit = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SearchCardContentPreview() {
+
+    FlushCardsTheme {
+        SearchCardContent(
+            cards = mutableListOf(FlashCard(1, "test", "тестовый")),
+            onDismiss = {},
+            onSelectCard = {}
         )
     }
 }

@@ -1,6 +1,6 @@
 package com.example.flushcards.navigation
 
-import EditModuleScreen
+import com.example.flushcards.screens.EditModuleScreen
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue

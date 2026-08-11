@@ -1,7 +1,5 @@
 package com.example.flushcards.screens
 
-import ButtonScrollDown
-import SearchCard
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -39,7 +37,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Style
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CardDefaults.cardColors
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -51,7 +49,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -86,12 +86,23 @@ fun CurrentModuleScreen(
 ) {
     val cardsInfoState = rememberLazyListState()
 
+    var highlightedCardIndex by remember { mutableIntStateOf(-1) }
+
+    LaunchedEffect(highlightedCardIndex) {
+        if (highlightedCardIndex < 0)  return@LaunchedEffect
+        cardsInfoState.animateScrollToItem(highlightedCardIndex)
+
+        delay(1500)
+        highlightedCardIndex = -1
+    }
+
     BackHandler { onExit() }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding()
     ) {
 
         Scaffold(
@@ -104,7 +115,15 @@ fun CurrentModuleScreen(
                         .padding(start = 16.dp, end = 16.dp, top = 8.dp
                 )
                 ) {
-                    CurrentScreenHeader(currentModule, cardsInfoState, onNavigate, onDelete, onExit)
+                    CurrentScreenHeader(
+                        module = currentModule,
+                        cardsInfoState = cardsInfoState,
+                        onNavigate = onNavigate,
+                        onDelete = onDelete,
+                        onBack = onExit,
+                        onSelectedCard = {index ->
+                            highlightedCardIndex = index
+                        })
                 }
             }
         ) { innerPadding ->
@@ -183,8 +202,9 @@ fun CurrentModuleScreen(
                 itemsIndexed(
                     items = currentModule.cards,
                     key = { _, card -> card.id }
-                ) { _, card ->
-                    CardInfo(card = card)
+                ) { index, card ->
+                    CardInfo(card = card,
+                        isHighlighted = index == highlightedCardIndex)
                 }
 
             }
@@ -212,7 +232,7 @@ fun ModeCard(
             .padding(vertical = 6.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
+        colors = cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
@@ -264,15 +284,14 @@ fun ModeCard(
 }
 
 @Composable
-fun CardInfo(card: FlashCard) {
+fun CardInfo(card: FlashCard, isHighlighted: Boolean) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+        colors = cardColors(containerColor = getBackgroundCardColor(isHighlighted)),
+        border = BorderStroke(2.dp, getBorderCardColor(isHighlighted)),
     ) {
         Column(
             modifier = Modifier
@@ -313,7 +332,8 @@ fun CurrentScreenHeader(
     cardsInfoState: LazyListState,
     onNavigate: (Screen) -> Unit,
     onDelete: (Module) -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onSelectedCard: (Int) -> Unit
 ) {
     var isSearchActive by remember { mutableStateOf(false) }
 
@@ -374,7 +394,10 @@ fun CurrentScreenHeader(
         }
     }
     if (isSearchActive) {
-        SearchCard(module.cards, cardsInfoState, onDismiss = { isSearchActive = false })
+        SearchCard(
+            cards = module.cards,
+            onDismiss = { isSearchActive = false },
+            onSelectCard = onSelectedCard)
     }
 }
 
@@ -587,7 +610,7 @@ fun CurrentModulePreview() {
 @Composable
 fun CardInfoPreview() {
     FlushCardsTheme {
-        CardInfo(FlashCard(1, "assess", "оценивать"))
+        CardInfo(FlashCard(1, "assess", "оценивать"), true)
     }
 }
 
