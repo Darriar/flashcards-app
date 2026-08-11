@@ -1,5 +1,6 @@
 package com.example.flushcards.screens
 
+import android.speech.tts.TextToSpeech
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -18,12 +19,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.ArrowRight
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
@@ -70,12 +71,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.flushcards.R
+import com.example.flushcards.api.convertTextToSpeech
 import com.example.flushcards.model.FlashCard
 import com.example.flushcards.model.Module
 import com.example.flushcards.model.Screen
 import com.example.flushcards.ui.theme.FlushCardsTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 @Composable
 fun CurrentModuleScreen(
@@ -117,7 +120,6 @@ fun CurrentModuleScreen(
                 ) {
                     CurrentScreenHeader(
                         module = currentModule,
-                        cardsInfoState = cardsInfoState,
                         onNavigate = onNavigate,
                         onDelete = onDelete,
                         onBack = onExit,
@@ -300,13 +302,54 @@ fun CardInfo(card: FlashCard, isHighlighted: Boolean) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(
-                text = card.word,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+
+                val tts = convertTextToSpeech()
+                IconButton(
+                    onClick = {
+                        tts?.let { engine ->
+                            engine.language = Locale.UK
+                            engine.speak(
+                                card.word,
+                                TextToSpeech.QUEUE_FLUSH,
+                                null,
+                                "UtteranceId_${card.word}"
+                            )
+                        }
+
+                        tts?.let { engine ->
+                            engine.language = Locale.forLanguageTag("ru-RU")
+                            engine.speak(
+                                card.meaning,
+                                TextToSpeech.QUEUE_ADD,
+                                null,
+                                "UtteranceId_${card.meaning}"
+                            )
+                        }
+                    },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                        contentDescription = "Произнести",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                Text(
+                    text = card.word,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+
+                Spacer(modifier = Modifier.width(24.dp))
+            }
 
             HorizontalDivider(
                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
@@ -329,7 +372,6 @@ fun CardInfo(card: FlashCard, isHighlighted: Boolean) {
 @Composable
 fun CurrentScreenHeader(
     module: Module,
-    cardsInfoState: LazyListState,
     onNavigate: (Screen) -> Unit,
     onDelete: (Module) -> Unit,
     onBack: () -> Unit,

@@ -27,4 +27,6 @@ data class FlashCard (
         roundsUntilReview = 0
     }
 
+    fun getFront(isTermFirst: Boolean): String = if (isTermFirst) word else meaning
+    fun getBack(isTermFirst: Boolean): String = if (isTermFirst) meaning else word
 }

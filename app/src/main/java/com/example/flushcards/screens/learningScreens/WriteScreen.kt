@@ -102,7 +102,7 @@ fun WriteScreen(module: Module, onExit: () -> Unit) {
         if (!isProcessing && answerState == null) {
 
             scope.launch {
-                if (currentCard.meaning.equals(guessMeaning.trim(), ignoreCase = true)) {
+                if (currentCard.getBack(module.isTermFirst).equals(guessMeaning.trim(), ignoreCase = true)) {
                     answerState = true
                     currentCard.rightAnswer()
                     rightAnswers++
@@ -154,10 +154,10 @@ fun WriteScreen(module: Module, onExit: () -> Unit) {
         Spacer(modifier = Modifier.height(20.dp))
 
         if (!showAnswer) {
-            WordCard(word = currentCard.word)
+            WordCard(word = currentCard.getFront(module.isTermFirst))
         } else {
             WordCard(
-                word = currentCard.meaning,
+                word = currentCard.getBack(module.isTermFirst),
                 containerColor = getContainerColor(showAnswer),
                 borderColor = getBorderColor(showAnswer))
         }

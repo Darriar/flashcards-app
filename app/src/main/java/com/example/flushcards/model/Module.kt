@@ -11,7 +11,6 @@ import androidx.compose.ui.unit.sp
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
 
-// сделать уникальное имя модуля
 @Serializable
 data class Module(
     val id: Int,
@@ -23,11 +22,6 @@ data class Module(
         cards.forEach { it.resetFirstTry()}
 
         val newCards = cards.filter { it.roundsUntilReview <= 0 }.shuffled()
-        if (!isTermFirst) {
-            newCards.forEach { card ->
-                card.word = card.meaning.also { card.meaning = card.word }
-            }
-        }
         return newCards.ifEmpty { cards }.toMutableList()
     }
 
@@ -55,6 +49,7 @@ data class Module(
              card.meaning = card.meaning.trim()
         }
     }
+
     fun showTermFirst() {
         isTermFirst = true
     }

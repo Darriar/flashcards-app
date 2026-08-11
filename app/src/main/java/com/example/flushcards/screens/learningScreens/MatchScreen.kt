@@ -173,7 +173,7 @@ fun MatchScreen(module: Module, onExit: () -> Unit) {
                     val isCorrect = if (checkedWordCard == card) isPairCorrect else null
 
                     MatchCard(
-                        text = card?.word,
+                        text = card?.getFront(module.isTermFirst),
                         isSelected = isSelected,
                         isCorrect = isCorrect,
                         onClick = {
@@ -184,7 +184,7 @@ fun MatchScreen(module: Module, onExit: () -> Unit) {
                                 val meaningCard = selectedMeaning!!
 
                                 val isCorrectResult = checkAnswer(
-                                    card, meaningCard, cardsToLearn, learnedCards,
+                                    card, meaningCard, cardsToLearn, learnedCards, module.isTermFirst,
                                     onCorrect = { rightAnswers++ },
                                     onWrong = { wrongAnswers++ })
 
@@ -206,7 +206,7 @@ fun MatchScreen(module: Module, onExit: () -> Unit) {
                     val isCorrect = if (checkedMeaningCard == card) isPairCorrect else null
 
                     MatchCard(
-                        text = card?.meaning,
+                        text = card?.getBack(module.isTermFirst),
                         isSelected = isSelected,
                         isCorrect = isCorrect,
                         onClick = {
@@ -217,7 +217,7 @@ fun MatchScreen(module: Module, onExit: () -> Unit) {
                                 val wordCard = selectedWord!!
 
                                 val isCorrectResult = checkAnswer(wordCard,
-                                    card, cardsToLearn, learnedCards,
+                                    card, cardsToLearn, learnedCards, module.isTermFirst,
                                     onCorrect = { rightAnswers++ },
                                     onWrong = { wrongAnswers++ })
 
@@ -239,10 +239,11 @@ fun checkAnswer(
     meaningCard: FlashCard,
     cardsToLearn: MutableList<FlashCard>,
     learnedCards: MutableList<FlashCard>,
+    isTermFirst: Boolean,
     onCorrect: () -> Unit,
     onWrong: () -> Unit
 ): Boolean {
-    val isCorrectResult = wordCard.meaning == meaningCard.meaning
+    val isCorrectResult = wordCard.getBack(isTermFirst) == meaningCard.getBack(isTermFirst)
 
     val isFirstTry = wordCard.isFirstTry
     val originalCard = cardsToLearn.find { it == wordCard }

@@ -81,11 +81,11 @@ fun QuizScreen(module: Module, onExit: () -> Unit) {
 
     val answers = remember(currentCard) {
         (module.cards
-            .filter { it.meaning != currentCard.meaning }
-            .map { it.meaning }
+            .filter { it.getBack(module.isTermFirst) != currentCard.getBack(module.isTermFirst) }
+            .map { it.getBack(module.isTermFirst) }
             .distinct()
             .shuffled()
-            .take(3) + currentCard.meaning).shuffled()
+            .take(3) + currentCard.getBack(module.isTermFirst)).shuffled()
     }
 
     BackHandler { onExit() }
@@ -106,7 +106,7 @@ fun QuizScreen(module: Module, onExit: () -> Unit) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        WordCard(currentCard.word)
+        WordCard(currentCard.getFront(module.isTermFirst))
 
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -127,10 +127,10 @@ fun QuizScreen(module: Module, onExit: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             answers.forEach { answer ->
-                AnswerCard(answer, selectedAnswer, currentCard,
+                AnswerCard(answer, selectedAnswer, currentCard, module.isTermFirst,
                     onClick =  {
                         selectedAnswer = answer
-                        if (answer == currentCard.meaning) {
+                        if (answer == currentCard.getBack(module.isTermFirst)) {
                             currentCard.rightAnswer()
                             rightAnswers++
                         } else {
@@ -157,9 +157,9 @@ fun QuizScreen(module: Module, onExit: () -> Unit) {
 }
 
 @Composable
-fun AnswerCard(answer: String, selectedAnswer: String?, currentCard: FlashCard, onClick: () -> Unit) {
+fun AnswerCard(answer: String, selectedAnswer: String?, currentCard: FlashCard, isTermFirst: Boolean, onClick: () -> Unit) {
     val isCurrent = selectedAnswer == answer
-    val isCorrect = answer == currentCard.meaning
+    val isCorrect = answer == currentCard.getBack(isTermFirst)
 
     val buttonColors = when {
         (isCurrent && isCorrect) || (selectedAnswer != null && isCorrect) -> ButtonDefaults.outlinedButtonColors(

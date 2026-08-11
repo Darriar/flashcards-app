@@ -1,10 +1,9 @@
 package com.example.flushcards.screens.learningScreens
 
-import android.annotation.SuppressLint
+import android.speech.tts.TextToSpeech
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -25,9 +24,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -57,10 +59,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.flushcards.R
+import com.example.flushcards.api.convertTextToSpeech
 import com.example.flushcards.model.FlashCard
 import com.example.flushcards.model.Module
 import com.example.flushcards.ui.theme.FlushCardsTheme
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 @Composable
 fun FlashCardsScreen(module: Module, onExit: () -> Unit) {
@@ -118,6 +122,7 @@ fun FlashCardsScreen(module: Module, onExit: () -> Unit) {
         FlashCardView(
             card = currentCard,
             isFlipped = isFlipped,
+            isTermFirst = module.isTermFirst,
             onFlip = { isFlipped = !isFlipped },
             onSwipeLeft = {
                 currentCard.rightAnswer()
@@ -141,9 +146,52 @@ fun FlashCardsScreen(module: Module, onExit: () -> Unit) {
             }
         )
 
-        Spacer(modifier = Modifier.weight(1f))
+        Box(
+            contentAlignment = Alignment.BottomStart,
+            modifier = Modifier.weight(1f)
+                .align(Alignment.Start)
+        ) {
+            PronounceButton(
+                card = currentCard,
+                isFlipped = isFlipped,
+                isTermFirst = module.isTermFirst
+            )
+        }
     }
 
+}
+
+@Composable
+fun PronounceButton(card: FlashCard, isFlipped: Boolean, isTermFirst: Boolean) {
+
+    val tts = convertTextToSpeech()
+
+    val targetLocale = if ((!isFlipped && isTermFirst) || (isFlipped && !isTermFirst)) {
+        Locale.UK
+    } else {
+        Locale.forLanguageTag("ru-RU")
+    }
+    val word = if (!isFlipped) card.getFront(isTermFirst) else card.getBack(isTermFirst)
+    IconButton(
+        onClick = {
+            tts?.let { engine ->
+                engine.language = targetLocale
+                engine.speak(
+                    word,
+                    TextToSpeech.QUEUE_FLUSH,
+                    null,
+                    "UtteranceId_$word"
+                )
+            }
+        },
+        modifier = Modifier.size(32.dp)
+    ) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+            contentDescription = "Произнести",
+            tint = MaterialTheme.colorScheme.primary
+        )
+    }
 }
 
 @Composable
@@ -161,7 +209,7 @@ fun FlashCardsHeader(
         color = MaterialTheme.colorScheme.surface,
         shadowElevation = 4.dp
     ) {
-        Row (
+        Row(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 16.dp),
@@ -230,6 +278,7 @@ fun FlashCardsHeader(
 fun FlashCardView(
     card: FlashCard,
     isFlipped: Boolean,
+    isTermFirst: Boolean,
     onFlip: () -> Unit,
     onSwipeLeft: () -> Unit,
     onSwipeRight: () -> Unit,
@@ -281,6 +330,7 @@ fun FlashCardView(
                                     onSwipeRight()
                                 }
                             }
+
                             offsetX.value < -swipeThreshold -> {
                                 scope.launch {
                                     isLabelVisible = false
@@ -288,6 +338,7 @@ fun FlashCardView(
                                     onSwipeLeft()
                                 }
                             }
+
                             else -> {
                                 scope.launch { offsetX.animateTo(0f, tween(flipDuration)) }
                             }
@@ -326,7 +377,7 @@ fun FlashCardView(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = if (rotation.value < 90f) card.word else card.meaning,
+                    text = if (rotation.value < 90f) card.getFront(isTermFirst) else card.getBack(isTermFirst),
                     fontSize = 30.sp,
                     lineHeight = 36.sp,
                     fontWeight = FontWeight.Bold,
