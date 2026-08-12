@@ -32,6 +32,8 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
@@ -78,9 +80,11 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -724,10 +728,19 @@ fun SearchCardContent(
 
     var currentIndex by remember(resultIndexes) { mutableIntStateOf(0) }
 
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    LaunchedEffect(resultIndexes) {
+        currentIndex = 0
+        if (resultIndexes.isNotEmpty()) {
+            onSelectCard(resultIndexes[0])
+        }
+    }
+
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp),
         shape = RoundedCornerShape(24.dp),
         color = MaterialTheme.colorScheme.surface,
         shadowElevation = 8.dp
@@ -750,9 +763,7 @@ fun SearchCardContent(
                     TextField(
                         value = searchWord,
                         onValueChange = {
-                            searchWord = it
-                            if (resultIndexes.isNotEmpty()) onSelectCard(resultIndexes[currentIndex])
-                                        },
+                            searchWord = it },
                         placeholder = {
                             Text(
                                 text = "Поиск по карточкам...",
@@ -773,6 +784,10 @@ fun SearchCardContent(
                             color = MaterialTheme.colorScheme.onSurface
                         ),
                         singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(
+                            onSearch = { keyboardController?.hide() }
+                        ),
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = Color.Transparent,
                             unfocusedContainerColor = Color.Transparent,
@@ -829,8 +844,10 @@ fun SearchCardContent(
                         )
 
                         Row {
+
                             IconButton(
                                 onClick = {
+                                    keyboardController?.hide()
                                     if (resultIndexes.isNotEmpty()) {
                                         currentIndex =
                                             if (currentIndex > 0) currentIndex - 1 else resultIndexes.size - 1
@@ -851,6 +868,7 @@ fun SearchCardContent(
 
                             IconButton(
                                 onClick = {
+                                    keyboardController?.hide()
                                     if (resultIndexes.isNotEmpty()) {
                                         currentIndex = (currentIndex + 1) % resultIndexes.size
                                         onSelectCard(resultIndexes[currentIndex])
