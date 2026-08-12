@@ -1,4 +1,4 @@
-package com.example.flushcards.api
+package com.example.flushcards.services
 
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get

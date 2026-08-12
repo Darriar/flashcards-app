@@ -35,6 +35,10 @@ data class Module(
             cards.forEach { if (!cardsToLearn.contains(it)) it.roundsUntilReview-- }
     }
 
+    fun addCard(card: ParsedCard) {
+        val id = if (cards.isEmpty()) 1 else cards.maxOf { it.id } + 1
+        cards.add(FlashCard(id = id, word = card.word, meaning = card.meaning))
+    }
     fun resetProgress() {
         cards.forEach {
             it.progress = 0

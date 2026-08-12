@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -49,6 +50,7 @@ import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -71,7 +73,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.flushcards.R
-import com.example.flushcards.api.convertTextToSpeech
+import com.example.flushcards.services.convertTextToSpeech
 import com.example.flushcards.model.FlashCard
 import com.example.flushcards.model.Module
 import com.example.flushcards.model.Screen
@@ -92,7 +94,7 @@ fun CurrentModuleScreen(
     var highlightedCardIndex by remember { mutableIntStateOf(-1) }
 
     LaunchedEffect(highlightedCardIndex) {
-        if (highlightedCardIndex < 0)  return@LaunchedEffect
+        if (highlightedCardIndex < 0) return@LaunchedEffect
         cardsInfoState.animateScrollToItem(highlightedCardIndex)
 
         delay(1500)
@@ -115,15 +117,16 @@ fun CurrentModuleScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .statusBarsPadding()
-                        .padding(start = 16.dp, end = 16.dp, top = 8.dp
-                )
+                        .padding(
+                            start = 16.dp, end = 16.dp, top = 8.dp
+                        )
                 ) {
                     CurrentScreenHeader(
                         module = currentModule,
                         onNavigate = onNavigate,
                         onDelete = onDelete,
                         onBack = onExit,
-                        onSelectedCard = {index ->
+                        onSelectedCard = { index ->
                             highlightedCardIndex = index
                         })
                 }
@@ -205,8 +208,10 @@ fun CurrentModuleScreen(
                     items = currentModule.cards,
                     key = { _, card -> card.id }
                 ) { index, card ->
-                    CardInfo(card = card,
-                        isHighlighted = index == highlightedCardIndex)
+                    CardInfo(
+                        card = card,
+                        isHighlighted = index == highlightedCardIndex
+                    )
                 }
 
             }
@@ -368,7 +373,6 @@ fun CardInfo(card: FlashCard, isHighlighted: Boolean) {
     }
 }
 
-
 @Composable
 fun CurrentScreenHeader(
     module: Module,
@@ -439,7 +443,8 @@ fun CurrentScreenHeader(
         SearchCard(
             cards = module.cards,
             onDismiss = { isSearchActive = false },
-            onSelectCard = onSelectedCard)
+            onSelectCard = onSelectedCard
+        )
     }
 }
 

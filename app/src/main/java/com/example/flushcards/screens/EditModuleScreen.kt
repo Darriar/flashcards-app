@@ -39,15 +39,19 @@ import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.UploadFile
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -55,6 +59,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -84,10 +89,12 @@ import androidx.compose.ui.util.fastCoerceIn
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import com.example.flushcards.R
-import com.example.flushcards.api.TranslationService
+import com.example.flushcards.services.TranslationService
 import com.example.flushcards.model.FlashCard
 import com.example.flushcards.model.Module
 import com.example.flushcards.model.ModuleConfig
+import com.example.flushcards.model.ParsedCard
+import com.example.flushcards.services.ImportSheetContent
 import com.example.flushcards.ui.theme.FlushCardsTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -565,6 +572,7 @@ fun CreateModuleHeader(
     onSelectCard: (index: Int) -> Unit
 ) {
     var isSearchActive by remember { mutableStateOf(false) }
+    var isImportCards by remember { mutableStateOf(false) }
 
     Box {
         Surface(
@@ -599,15 +607,32 @@ fun CreateModuleHeader(
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Search",
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clip(CircleShape)
-                        .clickable { isSearchActive = true },
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp   )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search",
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .clickable { isSearchActive = true },
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+
+                    Icon(
+                        imageVector = Icons.Default.UploadFile,
+                        contentDescription = "Cards Import",
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .clickable { isImportCards = true },
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
             }
         }
 
@@ -618,6 +643,40 @@ fun CreateModuleHeader(
                 onSelectCard = onSelectCard
             )
         }
+    if (isImportCards) {
+        ImportModalSheet(
+            onDismiss = { isImportCards = false },
+            onImport = {parsedCards ->
+                parsedCards.forEach { module.addCard(it) }
+            }
+        )
+    }
+
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ImportModalSheet(onDismiss: () -> Unit, onImport: (List<ParsedCard>) -> Unit){
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
+    )
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        scrimColor = MaterialTheme.colorScheme.scrim.copy(alpha = 0.32f),
+        dragHandle = {
+            BottomSheetDefaults.DragHandle(
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+    ) {
+        ImportSheetContent(
+            sheetState = sheetState,
+            onImport = onImport,
+            onDismiss = onDismiss
+        )
     }
 }
 

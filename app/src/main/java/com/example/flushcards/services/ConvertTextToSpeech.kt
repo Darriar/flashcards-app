@@ -1,4 +1,4 @@
-package com.example.flushcards.api
+package com.example.flushcards.services
 
 import android.speech.tts.TextToSpeech
 import androidx.compose.runtime.Composable
@@ -8,10 +8,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import java.util.Locale
+import androidx.compose.ui.platform.LocalInspectionMode
 
 @Composable
 fun convertTextToSpeech(): TextToSpeech? {
+    if (LocalInspectionMode.current) return null
     val context = LocalContext.current
     var tts by remember { mutableStateOf<TextToSpeech?>(null) }
 

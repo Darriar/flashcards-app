@@ -33,7 +33,7 @@ import kotlinx.serialization.json.Json
 @Composable
 fun FlipCardsNavigation() {
 
-    var currentScreen by remember { mutableStateOf(Screen.MyModules) }
+    var currentScreen by remember { mutableStateOf(Screen.EditModule) }
     val cards = remember {
         mutableStateListOf(
             FlashCard(1, "assess", "оценивать"),

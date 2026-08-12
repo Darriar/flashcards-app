@@ -59,7 +59,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.flushcards.R
-import com.example.flushcards.api.convertTextToSpeech
+import com.example.flushcards.services.convertTextToSpeech
 import com.example.flushcards.model.FlashCard
 import com.example.flushcards.model.Module
 import com.example.flushcards.ui.theme.FlushCardsTheme
