@@ -21,7 +21,7 @@ import com.example.flushcards.ui.screens.EditModuleScreen
 import com.example.flushcards.ui.screens.MyModulesScreen
 import com.example.flushcards.ui.screens.learningscreens.flashCards.FlashCardsScreen
 import com.example.flushcards.ui.screens.learningscreens.match.MatchScreen
-import com.example.flushcards.ui.screens.learningscreens.QuizScreen
+import com.example.flushcards.ui.screens.learningscreens.quiz.QuizScreen
 import com.example.flushcards.ui.screens.learningscreens.WriteScreen
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString

@@ -44,10 +44,10 @@ import com.example.flushcards.ui.theme.FlushCardsTheme
 
 @Composable
 fun LearningResultScreen(
-    correctCount: Int = 18,
-    wrongCount: Int = 2,
-    onRetry: () -> Unit = {},
-    onExit: () -> Unit = {},
+    correctCount: Int,
+    wrongCount: Int,
+    onRetry: () -> Unit,
+    onExit: () -> Unit,
 ) {
     BackHandler { onExit() }
 
@@ -335,6 +335,11 @@ fun SecondaryActionButton(
 @Composable
 fun LearningResultScreenPreview() {
     FlushCardsTheme {
-        LearningResultScreen()
+        LearningResultScreen(
+            correctCount = 4,
+            wrongCount = 1,
+            onExit = {},
+            onRetry = {}
+        )
     }
 }

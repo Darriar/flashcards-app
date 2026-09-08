@@ -17,5 +17,4 @@ data class MatchUiState(
     val totalCardsCount: Int = 0,
     val learnedCardsCount: Int = 0,
     val isFinished: Boolean = false,
-    val isProcessing: Boolean = false
 )

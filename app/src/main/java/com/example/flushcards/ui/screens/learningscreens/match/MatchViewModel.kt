@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 class MatchViewModel(private val module: Module) : ViewModel() {
     private val _uiState = MutableStateFlow(MatchUiState())
@@ -18,6 +19,8 @@ class MatchViewModel(private val module: Module) : ViewModel() {
 
     private val cardsToLearn = mutableListOf<FlashCard>()
     private val learnedCards = mutableListOf<FlashCard>()
+
+    private var isProcessing = false
 
     init {
         setupGame()
@@ -41,7 +44,7 @@ class MatchViewModel(private val module: Module) : ViewModel() {
     }
 
     fun onWordClick(wordCard: FlashCard) {
-        if (_uiState.value.isProcessing) return
+        if (isProcessing) return
 
         if (_uiState.value.selectedWord == wordCard) {
             _uiState.update { it.copy(selectedWord = null) }
@@ -52,7 +55,7 @@ class MatchViewModel(private val module: Module) : ViewModel() {
     }
 
     fun onMeaningClick(meaningCard: FlashCard) {
-        if (_uiState.value.isProcessing) return
+        if (isProcessing) return
 
         if (_uiState.value.selectedMeaning == meaningCard) {
             _uiState.update { it.copy(selectedMeaning = null) }
@@ -66,7 +69,7 @@ class MatchViewModel(private val module: Module) : ViewModel() {
         val word = _uiState.value.selectedWord ?: return
         val meaning = _uiState.value.selectedMeaning ?: return
 
-        _uiState.update { it.copy(isProcessing = true) }
+        isProcessing = true
 
         viewModelScope.launch {
             val isCorrect = word.getBack(module.isTermFirst) == meaning.getBack(module.isTermFirst)
@@ -93,7 +96,7 @@ class MatchViewModel(private val module: Module) : ViewModel() {
                 )
             }
 
-            delay(ModuleConfig.HIGHLIGHT_DURATION)
+            delay(ModuleConfig.HIGHLIGHT_DURATION.milliseconds)
 
             if (isCorrect) {
                 removeMatchedAndReplenish(word, meaning)
@@ -113,9 +116,10 @@ class MatchViewModel(private val module: Module) : ViewModel() {
                     isPairCorrect = null,
                     learnedCardsCount = learnedCards.size,
                     isFinished = isGameFinished,
-                    isProcessing = false
                 )
             }
+
+            isProcessing = false
         }
     }
 
