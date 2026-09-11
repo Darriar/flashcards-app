@@ -16,8 +16,8 @@ import com.example.flushcards.data.storage.ModuleStorageService
 import com.example.flushcards.data.storage.ModuleStorageService.deleteModule
 import com.example.flushcards.ui.components.EditModuleDialogState
 import com.example.flushcards.ui.components.EditModuleDialogs
-import com.example.flushcards.ui.screens.CurrentModuleScreen
-import com.example.flushcards.ui.screens.EditModuleScreen
+import com.example.flushcards.ui.screens.currentModule.CurrentModuleScreen
+import com.example.flushcards.ui.screens.editModule.EditModuleScreen
 import com.example.flushcards.ui.screens.MyModulesScreen
 import com.example.flushcards.ui.screens.learningscreens.flashCards.FlashCardsScreen
 import com.example.flushcards.ui.screens.learningscreens.match.MatchScreen

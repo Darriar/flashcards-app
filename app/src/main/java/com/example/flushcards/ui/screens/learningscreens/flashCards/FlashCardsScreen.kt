@@ -26,6 +26,8 @@ import com.example.flushcards.ui.screens.LearningResultScreen
 import com.example.flushcards.ui.screens.learningscreens.flashCards.components.FlashCardView
 import com.example.flushcards.ui.screens.learningscreens.flashCards.components.PronounceButton
 import com.example.flushcards.ui.theme.FlushCardsTheme
+import com.example.flushcards.util.convertTextToSpeech
+import android.speech.tts.TextToSpeech
 
 
 @Composable
@@ -40,6 +42,7 @@ fun FlashCardsScreen(
     )
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val tts = convertTextToSpeech()
 
     if (uiState.isFinished) {
         LearningResultScreen(
@@ -89,7 +92,15 @@ fun FlashCardsScreen(
                 .align(Alignment.Start)
                 .padding(bottom = 32.dp)
         ) {
-            PronounceButton(onClick = {viewModel.onPronounce() } )
+            PronounceButton(onClick = {
+                val speechData = viewModel.onPronounce()
+                speechData?.let { (text, locale) ->
+                    tts?.let { engine ->
+                        engine.language = locale
+                        engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
+                    }
+                }
+            })
         }
     }
 
