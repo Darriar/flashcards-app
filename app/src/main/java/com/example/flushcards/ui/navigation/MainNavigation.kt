@@ -10,7 +10,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.example.flushcards.data.constants.ModuleConfig
-import com.example.flushcards.data.model.FlashCard
 import com.example.flushcards.data.model.Module
 import com.example.flushcards.data.storage.ModuleStorageService
 import com.example.flushcards.data.storage.ModuleStorageService.deleteModule
@@ -18,11 +17,11 @@ import com.example.flushcards.ui.components.EditModuleDialogState
 import com.example.flushcards.ui.components.EditModuleDialogs
 import com.example.flushcards.ui.screens.currentModule.CurrentModuleScreen
 import com.example.flushcards.ui.screens.editModule.EditModuleScreen
-import com.example.flushcards.ui.screens.MyModulesScreen
 import com.example.flushcards.ui.screens.learningscreens.flashCards.FlashCardsScreen
 import com.example.flushcards.ui.screens.learningscreens.match.MatchScreen
 import com.example.flushcards.ui.screens.learningscreens.quiz.QuizScreen
 import com.example.flushcards.ui.screens.learningscreens.write.WriteScreen
+import com.example.flushcards.ui.screens.myModules.MyModulesScreen
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -31,15 +30,7 @@ import kotlinx.serialization.json.Json
 fun FlipCardsNavigation() {
     val currentScreen = remember { mutableStateOf(Screen.MyModules) }
 
-    val initialCards = remember {
-        mutableStateListOf(
-            FlashCard(1, "assess", "оценивать"),
-            FlashCard(2, "overrated", "переоцененный"),
-            FlashCard(3, "eternal", "вечный, неизменный"),
-            FlashCard(4, "invading", "вторжение")
-        )
-    }
-    val modules = remember { mutableStateListOf(Module(1, "English words", initialCards)) }
+    val modules = remember { mutableStateListOf<Module>() }
 
     val currentModule = remember {
         mutableStateOf(modules.firstOrNull() ?: Module(1, "", mutableListOf()))
@@ -62,7 +53,9 @@ fun FlipCardsNavigation() {
                 currentModule.value = module
                 currentScreen.value = Screen.CurrentModule
             },
-            onAddModule = { newModule ->
+            onAddModule = {
+                val id = if (modules.isEmpty()) 1 else modules.maxOf { it.id } + 1
+                val newModule = Module(id, "Новый модуль", mutableListOf())
                 currentModule.value = newModule
                 currentScreen.value = Screen.EditModule
             }

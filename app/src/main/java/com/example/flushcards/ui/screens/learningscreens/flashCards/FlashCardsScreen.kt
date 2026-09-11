@@ -22,7 +22,7 @@ import com.example.flushcards.data.model.Module
 import com.example.flushcards.data.preview.SampleData
 import com.example.flushcards.ui.components.AppTopBar
 import com.example.flushcards.ui.components.LearningCardsProgress
-import com.example.flushcards.ui.screens.LearningResultScreen
+import com.example.flushcards.ui.screens.learningResult.LearningResultScreen
 import com.example.flushcards.ui.screens.learningscreens.flashCards.components.FlashCardView
 import com.example.flushcards.ui.screens.learningscreens.flashCards.components.PronounceButton
 import com.example.flushcards.ui.theme.FlushCardsTheme

@@ -20,7 +20,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.flushcards.data.model.Module
 import com.example.flushcards.data.preview.SampleData
-import com.example.flushcards.ui.screens.LearningResultScreen
+import com.example.flushcards.ui.screens.learningResult.LearningResultScreen
 import com.example.flushcards.ui.screens.learningscreens.match.components.MatchGrid
 import com.example.flushcards.ui.screens.learningscreens.match.components.MatchHeader
 import com.example.flushcards.ui.theme.FlushCardsTheme

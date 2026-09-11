@@ -30,7 +30,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.flushcards.data.model.FlashCard
 import com.example.flushcards.data.preview.SampleData
-import com.example.flushcards.ui.screens.currentModule.CurrentModuleScreen
 import com.example.flushcards.ui.theme.FlushCardsTheme
 import com.example.flushcards.util.cardHighlightBackgroundColor
 import com.example.flushcards.util.cardHighlightBorderColor
@@ -41,7 +40,6 @@ import java.util.Locale
 fun CardInfo(
     card: FlashCard,
     isHighlighted: Boolean,
-    onSpeakClick: @Composable () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -95,23 +93,6 @@ fun CardInfo(
 }
 
 @Composable
-private fun PronounceButton(
-    card: FlashCard,
-    onSpeakClick: (FlashCard) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    IconButton(
-        onClick = { onSpeakClick(card) },
-        modifier = modifier.size(32.dp)
-    ) {
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.VolumeUp,
-            contentDescription = "Произнести",
-            tint = MaterialTheme.colorScheme.primary
-        )
-    }
-}
-@Composable
 private fun PronounceButton(card: FlashCard) {
     val tts = if (LocalInspectionMode.current) null else convertTextToSpeech()
     IconButton(
@@ -155,13 +136,11 @@ fun CardInfoPreview() {
             CardInfo(
                 SampleData.vocabularyModule.cards.first(),
                 true,
-                {}
             )
 
             CardInfo(
-                SampleData.vocabularyModule.cards.get(1),
+                SampleData.vocabularyModule.cards[1],
                 false,
-                {}
             )
         }
     }

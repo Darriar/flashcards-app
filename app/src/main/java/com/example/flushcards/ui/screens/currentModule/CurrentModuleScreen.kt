@@ -148,7 +148,6 @@ fun CurrentModuleScreen(
                     CardInfo(
                         card = card,
                         isHighlighted = index == uiState.highlightedCardIndex,
-                        onSpeakClick = { viewModel.onSpeakCard(card) }
                     )
                 }
 
