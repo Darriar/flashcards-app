@@ -2,13 +2,14 @@ package com.example.flushcards.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.flushcards.data.constants.ModuleConfig
 import com.example.flushcards.data.model.Module
 import com.example.flushcards.data.storage.ModuleStorageService
@@ -27,83 +28,57 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 @Composable
-fun FlipCardsNavigation() {
-    val currentScreen = remember { mutableStateOf(Screen.MyModules) }
-
-    val modules = remember { mutableStateListOf<Module>() }
-
-    val currentModule = remember {
-        mutableStateOf(modules.firstOrNull() ?: Module(1, "", mutableListOf()))
-    }
-
+fun FlipCardsNavigation(
+    viewModel: MainViewModel = viewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        val loadedStrings = ModuleStorageService.loadModule(context)
-        loadedStrings.forEach { string ->
-            val module = Json.decodeFromString<Module>(string)
-            modules.add(module)
-        }
+        viewModel.loadModules(context)
     }
 
-    when (currentScreen.value) {
+    when (uiState.currentScreen) {
         Screen.MyModules -> MyModulesScreen(
-            modules = modules,
-            onModuleCLick = { module ->
-                currentModule.value = module
-                currentScreen.value = Screen.CurrentModule
-            },
-            onAddModule = {
-                val id = if (modules.isEmpty()) 1 else modules.maxOf { it.id } + 1
-                val newModule = Module(id, "Новый модуль", mutableListOf())
-                currentModule.value = newModule
-                currentScreen.value = Screen.EditModule
-            }
+            modules = uiState.modules,
+            onModuleCLick = { viewModel.selectModule(it) },
+            onAddModule = { viewModel.addNewModule() }
         )
 
         Screen.CurrentModule -> SetCurrentModule(
-            currentModule = currentModule.value,
-            onNavigate = { screen -> currentScreen.value = screen },
-            onModuleDeleted = { deletedModule ->
-                modules.remove(deletedModule)
-                if (currentModule.value == deletedModule) {
-                    currentModule.value = modules.firstOrNull() ?: Module(1, "", mutableListOf())
-                }
-            },
-            onExit = { currentScreen.value = Screen.MyModules }
+            currentModule = uiState.currentModule,
+            onNavigate = { viewModel.navigateTo(it) },
+            onModuleDeleted = { viewModel.deleteModuleFromList(it) },
+            onExit = { viewModel.navigateTo(Screen.MyModules) }
         )
 
         Screen.EditModule -> SetEditModule(
-            currentModule = currentModule.value,
-            modules = modules,
-            onModuleSaved = { savedModule ->
-                currentModule.value = savedModule
-                val index = modules.indexOfFirst { it.id == savedModule.id }
-                if (index == -1) modules.add(savedModule) else modules[index] = savedModule
-            },
-            onNavigateToMyModules = { currentScreen.value = Screen.MyModules },
-            onNavigateToCurrentModule = { currentScreen.value = Screen.CurrentModule },
-            onRemoveModule = { module -> modules.remove(module) }
+            currentModule = uiState.currentModule,
+            modules = uiState.modules,
+            onModuleSaved = { viewModel.saveModule(it) },
+            onNavigateToMyModules = { viewModel.navigateTo(Screen.MyModules) },
+            onNavigateToCurrentModule = { viewModel.navigateTo(Screen.CurrentModule) },
+            onRemoveModule = { viewModel.deleteModuleFromList(it) }
         )
 
         Screen.FlipCards -> FlashCardsScreen(
-            module = currentModule.value,
-            onExit = { currentScreen.value = Screen.CurrentModule }
+            module = uiState.currentModule,
+            onExit = { viewModel.navigateTo(Screen.CurrentModule) }
         )
 
         Screen.Quiz -> QuizScreen(
-            module = currentModule.value,
-            onExit = { currentScreen.value = Screen.CurrentModule }
+            module = uiState.currentModule,
+            onExit = { viewModel.navigateTo(Screen.CurrentModule) }
         )
 
         Screen.Match -> MatchScreen(
-            module = currentModule.value,
-            onExit = { currentScreen.value = Screen.CurrentModule }
+            module = uiState.currentModule,
+            onExit = { viewModel.navigateTo(Screen.CurrentModule) }
         )
 
         Screen.Write -> WriteScreen(
-            module = currentModule.value,
-            onExit = { currentScreen.value = Screen.CurrentModule }
+            module = uiState.currentModule,
+            onExit = { viewModel.navigateTo(Screen.CurrentModule) }
         )
     }
 }

@@ -19,7 +19,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CardDefaults.cardColors
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -130,7 +129,7 @@ private fun DeleteCard(
             .fillMaxHeight()
             .fillMaxWidth()
             .clipToBounds(),
-        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.errorContainer),
+        colors = cardColors(MaterialTheme.colorScheme.errorContainer),
     ) {
         Box(
             modifier = Modifier

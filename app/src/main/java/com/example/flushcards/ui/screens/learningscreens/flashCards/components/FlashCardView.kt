@@ -21,11 +21,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.flushcards.data.model.FlashCard
-import com.example.flushcards.data.preview.SampleData
-import com.example.flushcards.ui.theme.FlushCardsTheme
 import kotlinx.coroutines.launch
 
 @Composable

@@ -27,7 +27,7 @@ import com.example.flushcards.ui.theme.FlushCardsTheme
 
 @Composable
 fun ModulesColumn(
-    modules: MutableList<Module>,
+    modules: List<Module>,
     modifier: Modifier = Modifier,
     onModuleCLick: (module: Module) -> Unit
 ) {

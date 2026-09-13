@@ -35,7 +35,7 @@ import com.example.flushcards.ui.theme.ThemeManager
 
 @Composable
 fun MyModulesScreen(
-    modules: MutableList<Module>,
+    modules: List<Module>,
     onModuleCLick: (module: Module) -> Unit,
     onAddModule: () -> Unit,
 ) {

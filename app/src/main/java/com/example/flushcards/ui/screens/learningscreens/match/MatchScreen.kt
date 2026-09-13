@@ -5,24 +5,30 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.flushcards.data.model.Module
 import com.example.flushcards.data.preview.SampleData
+import com.example.flushcards.ui.components.AppTopBar
+import com.example.flushcards.ui.components.LearningCardsProgress
 import com.example.flushcards.ui.screens.learningResult.LearningResultScreen
 import com.example.flushcards.ui.screens.learningscreens.match.components.MatchGrid
-import com.example.flushcards.ui.screens.learningscreens.match.components.MatchHeader
 import com.example.flushcards.ui.theme.FlushCardsTheme
 
 @Composable
@@ -57,9 +63,27 @@ fun MatchScreen(
             .padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        MatchHeader(
-            viewModel = viewModel,
+        AppTopBar(
+            title = uiState.moduleName,
             onBack = onExit,
+            rightPartContent = {
+                LearningCardsProgress(
+                    currentCardIndex = uiState.learnedCardsCount + 1,
+                    total = uiState.totalCardsCount)
+            }
+        )
+
+        Spacer(modifier = Modifier.height(74.dp))
+
+        Text(
+            text = "Соедините термины и их значения",
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 16.dp),
+            textAlign = TextAlign.Center
         )
 
         MatchGrid(

@@ -59,6 +59,7 @@ import com.example.flushcards.util.parseTextToCards
 import com.example.flushcards.util.readTextFromUri
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 
 private enum class ImportState {
@@ -152,11 +153,11 @@ private fun ImportSheetContent(
                                 onImportClick = {
                                     scope.launch {
                                         isImporting = true
-                                        delay(800)
+                                        delay(800.milliseconds)
                                         onImport(parsedCards)
                                         isImporting = false
                                         isSuccess = true
-                                        delay(1000)
+                                        delay(1000.milliseconds)
                                         sheetState.hide()
                                         onDismiss()
                                     }

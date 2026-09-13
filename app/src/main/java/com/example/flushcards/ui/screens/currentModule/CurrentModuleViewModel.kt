@@ -1,16 +1,11 @@
 package com.example.flushcards.ui.screens.currentModule
 
-import android.speech.tts.TextToSpeech
-import androidx.compose.runtime.Composable
 import androidx.lifecycle.ViewModel
-import com.example.flushcards.data.model.FlashCard
 import com.example.flushcards.data.model.Module
-import com.example.flushcards.util.convertTextToSpeech
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import java.util.Locale
 
 class CurrentModuleViewModel(private val module: Module): ViewModel() {
     private val _uiState =   MutableStateFlow(CurrentModuleUiState())
@@ -66,28 +61,4 @@ class CurrentModuleViewModel(private val module: Module): ViewModel() {
         _uiState.update { it.copy(isTermFirst = isTermFirst) }
     }
 
-    @Composable
-    fun onSpeakCard(card: FlashCard) {
-        val tts = convertTextToSpeech()
-
-        tts?.let { engine ->
-            engine.language = Locale.UK
-            engine.speak(
-                card.word,
-                TextToSpeech.QUEUE_FLUSH,
-                null,
-                "UtteranceId_${card.word}"
-            )
-        }
-
-        tts?.let { engine ->
-            engine.language = Locale.forLanguageTag("ru-RU")
-            engine.speak(
-                card.meaning,
-                TextToSpeech.QUEUE_ADD,
-                null,
-                "UtteranceId_${card.meaning}"
-            )
-        }
-    }
 }
